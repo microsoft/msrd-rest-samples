@@ -34,7 +34,6 @@ Calling the Powershell sample:
         -accountId <The GUID for your account goes here> `
         -apiToken <Your Api token goes here> `
         -subscriptionId <You Azure subscription ID goes here> `
-        -resourceGroup <Name of the resource group containing the storage account> `
         -storageAccountName <Name of the storage account used to upload the test driver> `
         -storageAccountKey <Your Azure storage account key> `
         -testFileFolder <Path to the local files on disk to be uploaded to the storage account and eventually the VM> `
