@@ -2,15 +2,6 @@
 
 This repository contains samples of how to programmatically access the Springfield service SDK.
 
-###Prerequisite:
-Contact the Springfield team at fuzzing@microsoft.com to have your Springfield account enabled for SDK use.
-
-## Obtaining an SDK token
-- Login to your Springfield account
-- Click on 'Settings' at the top right corner of the page
-- Under 'API Tokens' enter a token name, an expiration period and click add
-- A dialog box shows up with the generated token. Keep note of it and save it for later use.
-
 ## Samples
 
 ### PowershellSample.ps1
