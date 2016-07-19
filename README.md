@@ -2,6 +2,9 @@
 
 This repository contains samples of how to programmatically access the Springfield service SDK.
 
+###Prerequisite:
+Contact the Springfield team at fuzzing@microsoft.com to have your Springfield account enabled for SDK use.
+
 ## Obtaining an SDK token
 - Login to your Springfield account
 - Click on 'Settings' at the top right corner of the page
