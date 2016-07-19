@@ -1,6 +1,6 @@
 # Springfield-sdk-samples
 
-This repository contains samples of how to programmatically access the Springfield service SDK.
+This repository contains samples of how to programmatically access the Springfield service SDK.  Please review and complete the prerequisites found in the Wiki page.
 
 ## Samples
 
