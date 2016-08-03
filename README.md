@@ -2,9 +2,11 @@
 
 This repository contains samples of how to programmatically access the Springfield service SDK. 
 
-**Prerequisite:**
+**Prerequisite:**  
 - Must have a Springfield account enabled for SDK use.
-- Must have generated an API Token
+- Must have generated an API Token  
+
+*For detailed instructions [click here](https://github.com/Microsoft/springfield-sdk-samples/wiki/Prerequisites)*  
 
 ---  
 ## Samples
