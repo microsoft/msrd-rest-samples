@@ -5,27 +5,27 @@
 .DESCRIPTION
   The script performs the following:
     - Create a Springfield job
-    - Wait for preparation machine associated with the job to be ready 
+    - Wait for preparation machine associated with the job to be ready
     - Inject test application to be fuzzed and associated seed files into the virtual machine
-    - Submit the job 
+    - Submit the job
     - Monitor the job progress until it starts fuzzing
     - Wait until at least one result is reported
-    - Delete the job 
+    - Delete the job
 .REMARK
     The API token can be generated from the Springfield website on the setting page
 #>
 param(
     # URL to the Springfield service
     $springfieldUri = "https://www.alamohendersonville.com",
-    
+
     # Springfield Account Id
     [Parameter(Mandatory=$true)]
     $accountId,
-    
+
     # Springfield API token obtained from the settings page in Springfield portal
     [Parameter(Mandatory=$true)]
     $apiToken,
-    
+
     # Azure subscription ID
     [Parameter(Mandatory=$true)]
     $subscriptionId,
@@ -56,7 +56,7 @@ param(
         singleOsProcess = $true
         sysprepCompleted = $false
         promptValidationSysprep = $false
-    } 
+    }
 )
 
 # Extract name of sample from directory name
@@ -69,7 +69,7 @@ $sampleName = $(Split-Path $testFileFolder -Leaf)
 function UploadFileToAzure (
     # Path to the file to be uploaded to the storage account
     [Parameter(Mandatory=$true)] $sourceFileName,
-    
+
     $containerName = "sample"
 ) {
     $destContext = New-AzureStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $storageAccountKey
@@ -100,7 +100,7 @@ function CreateTestZipFile(
     $tmpDir = [System.IO.Path]::GetTempFileName()
     rm $tmpDir
     $dir = md $tmpDir
-    
+
     # Copy test driver and seed files
     Copy-Item $testFileFolder $tmpDir -Recurse
     $testZipPath = "$tmpDir\$sampleName.zip"
@@ -112,10 +112,10 @@ function CreateTestZipFile(
     # Generate script to automate job submission
     $submitJobScriptContent = @"
         '$($jobParameters | ConvertTo-Json)' | Set-Content c:\Springfield\JobParams.json
-        & c:\Springfield\Springfield.Prevalidation.UI.Console\Springfield.Prevalidation.UI.Console.exe -unattend
+        & c:\Springfield\Wizard\Springfield.Prevalidation.UI.Console.exe -unattend
 "@
     Set-Content -Path "$directoryToZip\install.ps1" -Value $submitJobScriptContent
-    
+
     Add-Type -assembly "system.io.compression.filesystem"
     if (Test-Path $testZipPath){
         Write-host "$testZipPath already exist: removing it"
@@ -151,14 +151,29 @@ $dependencyUris = `
 $pollingInternavalInSeconds = 60*3
 
 $headers = @{
-    "SpringfieldApiToken" = $apiToken 
+    "SpringfieldApiToken" = $apiToken
     "Content-Type" ="application/json"
     }
 
-$osImages = Invoke-RestMethod -Method GET -Uri "$springfieldUri/api/accounts/$accountId/osimages" -Headers $headers -Verbose
+function Invoke-Rest(){
+    param(
+        [Microsoft.PowerShell.Commands.WebRequestMethod] $method,
+        [System.Uri] $uri,
+        [System.Object] $Body = $null,
+        [string] $ContentType = "application/json",
+        [switch] $Verbose)
+    $result = Invoke-WebRequest -Method $method -Uri $uri -Headers $headers -Body $Body -ContentType $ContentType -Verbose:$Verbose
+    if ($result.StatusCode -eq 200){
+        return ConvertFrom-Json $result.Content
+    } else{
+        throw "Request failed: $($result.RawContent)"
+    }
+}
+
+$osImages = Invoke-Rest -Method GET -Uri "$springfieldUri/api/accounts/$accountId/osimages" -Verbose
 
 Write-Host "Creating a job"
-$jobInfo = Invoke-RestMethod -Method POST -Uri "$springfieldUri/api/accounts/$accountId/jobs?osImageId=$($osImages[0].Id)" -Headers $headers -Verbose
+$jobInfo = Invoke-Rest -Method POST -Uri "$springfieldUri/api/accounts/$accountId/jobs?osImageId=$($osImages[0].Id)" -Verbose
 
 $jobId = $jobInfo.Id
 Write-Host "job $jobId created"
@@ -166,14 +181,14 @@ Write-Host "job $jobId created"
 while (-not $jobInfo.IsPreparationVMReady) {
     Write-Host "Waiting for the preparation vm to be ready"
     Start-Sleep -Seconds $pollingInternavalInSeconds
-    $jobInfo = Invoke-RestMethod -Method GET -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId" -Headers $headers -Verbose
+    $jobInfo = Invoke-Rest -Method GET -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId" -Verbose
 }
 
 Write-Host "Retrieving the machine name"
-$machineName = Invoke-RestMethod -Method GET -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId/customermachine" -Headers $headers -Verbose
+$machineName = Invoke-Rest -Method GET -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId/customermachine" -Verbose
 Write-Host "Machine name $machineName retrieved"
 
-# The command to execute on the job preparation machine 
+# The command to execute on the job preparation machine
 $executionCommand = "powershell.exe -ExecutionPolicy Unrestricted -Command `".\UnzipAndRun.ps1 -zipFile $sampleName.zip -scriptToRun install.ps1 -outputDir 'c:\$sampleName'`""
 
 $commandParams = @{
@@ -182,12 +197,14 @@ $commandParams = @{
 } | ConvertTo-Json
 
 Write-Host "Submitting command for execution $commandParams"
-$commandInfo = Invoke-RestMethod -Method POST -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId/machines/$machineName/command" -Headers $headers -Body $commandParams -ContentType 'application/json' -Verbose
+$commandInfo = Invoke-Rest -Method POST -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId/machines/$machineName/command" -Body $commandParams -ContentType 'application/json' -Verbose
+
+Write-Host "Command execution sent: $commandInfo"
 
 while ($commandInfo.ExecutionState.IsPendingState) {
     Write-Host "Waiting for the command to finish executing"
     Start-Sleep -Seconds $pollingInternavalInSeconds
-    $commandInfo = Invoke-RestMethod -Method GET -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId/machines/$machineName/command/$($commandInfo.CommandId)" -Headers $headers -Verbose
+    $commandInfo = Invoke-Rest -Method GET -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId/machines/$machineName/command/$($commandInfo.CommandId)" -Verbose
 }
 
 if ($commandInfo.ExecutionState.IsErrorState) {
@@ -198,18 +215,18 @@ Write-Host "Monitoring command job status until fuzzing or error"
 while (-not $jobInfo.IsFuzzing) {
     Write-Host "Waiting for the job to start fuzzing"
     Start-Sleep -Seconds $pollingInternavalInSeconds
-    $jobInfo = Invoke-RestMethod -Method GET -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId" -Headers $headers -Verbose
+    $jobInfo = Invoke-Rest -Method GET -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId" -Verbose
 }
 
 Write-Host "Poll until we get at least one result"
-$results = Invoke-RestMethod -Method GET -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId/results" -Headers $headers -Verbose
+$results = Invoke-Rest -Method GET -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId/results" -Verbose
 
 while ($results.Count -eq 0){
     Start-Sleep -Seconds $pollingInternavalInSeconds
-    $results = Invoke-RestMethod -Method GET -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId/results" -Headers $headers -Verbose
+    $results = Invoke-Rest -Method GET -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId/results" -Verbose
 }
 
 Write "Got $($results.Count) results $results"
 Write-Host "Deleting the job"
 
-Invoke-RestMethod -Method DELETE -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId" -Headers $headers -Verbose
+Invoke-Rest -Method DELETE -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId" -Verbose
