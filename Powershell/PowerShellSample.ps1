@@ -182,7 +182,7 @@ function Invoke-Rest(){
         [switch] $Verbose)
     $result = Invoke-WebRequest -Method $method -Uri $uri -Headers $headers -Body $Body -ContentType $ContentType -Verbose:$Verbose
     if ($result.StatusCode -ge 200 -and $result.StatusCode -lt 300  ){
-        if ($result.RawContentLength > 0){
+        if ($result.RawContentLength -gt 0) {
             return ConvertFrom-Json $result.Content
         } else {
             return ""
