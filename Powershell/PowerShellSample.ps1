@@ -194,47 +194,20 @@ function Invoke-Rest(){
 
 $osImages = Invoke-Rest -Method GET -Uri "$springfieldUri/api/accounts/$accountId/osimages" -Verbose
 
+$commandParams =  @{
+    setup = @{
+            command = $preSubmissionCommand
+            downloadUris = $dependencyUris
+        }
+    testDriverParameters = $jobParameters
+} | ConvertTo-Json
+
 Write-Host "Creating a job"
-$jobInfo = Invoke-Rest -Method POST -Uri "$springfieldUri/api/accounts/$accountId/jobs?osImageId=$($osImages[0].Id)" -Verbose
+$jobInfo = Invoke-Rest -Method POST -Uri "$springfieldUri/api/accounts/$accountId/jobs?osImageId=$($osImages[0].Id)" -Body $commandParams -Verbose
 
 $jobId = $jobInfo.Id
 Write-Host "Job $jobId created"
 
-while (-not $jobInfo.IsPreparationVMReady) {
-    Write-Host "Waiting for the preparation vm to be ready"
-    Start-Sleep -Seconds $pollingIntervalInSeconds
-    $jobInfo = Invoke-Rest -Method GET -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId" -Verbose
-}
-
-Write-Host "Retrieving the machine name"
-$machineName = Invoke-Rest -Method GET -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId/customermachine" -Verbose
-Write-Host "Machine name $machineName retrieved"
-
-# Preparing the command to execute on the job preparation machine
-if (-not $preSubmissionCommand) {
-    $preSubmissionCommand = "echo No Pre Submission command"
-}
-$createTheJobParameterFile = "echo $($jobParameters | ConvertTo-Json -Compress) > c:\Springfield\JobParams.json"
-$submitTheJob = "c:\Springfield\Wizard\Springfield.Prevalidation.UI.Console.exe -unattend"
-
-$commandParams = @{
-    "command" = "$preSubmissionCommand & $createTheJobParameterFile & $submitTheJob"
-    "dependencyUris" = $dependencyUris
-} | ConvertTo-Json
-
-Write-Host "Submitting command for execution $commandParams"
-$commandInfo = Invoke-Rest -Method POST -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId/machines/$machineName/command" -Body $commandParams -ContentType 'application/json' -Verbose
-Write-Host "Command execution sent: $commandInfo"
-
-while ($commandInfo.ExecutionState.IsPendingState) {
-    Write-Host "Waiting for the command to finish executing"
-    Start-Sleep -Seconds $pollingIntervalInSeconds
-    $commandInfo = Invoke-Rest -Method GET -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId/machines/$machineName/command/$($commandInfo.CommandId)" -Verbose
-}
-
-if ($commandInfo.ExecutionState.IsErrorState) {
-    throw "Error during execution of custom command : $($commandInfo.ExecutionState.GetError)"
-}
 
 Write-Host "Monitoring command job status until fuzzing or error"
 while (-not $jobInfo.IsFuzzing) {
