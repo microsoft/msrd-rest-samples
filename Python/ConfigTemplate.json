@@ -1,0 +1,8 @@
+{
+    "msrdOrigin": "Replace with the API origin of MSRD deployment environment",
+    "msrdAccountId": "Replace with MSRD account ID",
+    "msrdApiToken": "Replace with MSRD API token",
+    "azureStorageAccountId": "Replace with Azure Storage account ID",
+    "azureStorageApiKey": "Replace with Azure Storage API key",
+    "azureStorageContainer": "Replace with the name of an Azure Storage container, which will be created if needed"
+}
