@@ -4,5 +4,10 @@
     "msrdApiToken": "Replace with MSRD API token",
     "azureStorageAccountId": "Replace with Azure Storage account ID",
     "azureStorageApiKey": "Replace with Azure Storage API key",
-    "azureStorageContainer": "Replace with the name of an Azure Storage container, which will be created if needed"
+    "azureStorageContainer": "Replace with the name of an Azure Storage container, which will be created if needed",
+    // Optional. Add (with this schema) if needed.
+    "proxies": {
+        "http": "127.0.0.1:8888",
+        "https": "127.0.0.1:8888"
+    }
 }

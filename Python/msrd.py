@@ -27,10 +27,11 @@ PRESUBMIT_COMMAND = 'powershell.exe -ExecutionPolicy Unrestricted -File Presubmi
 
 
 class MSRDClient(object):
-    def __init__(self, msrd_origin, account_id, api_token):
+    def __init__(self, msrd_origin, account_id, api_token, proxies=None):
         self.msrd_origin = msrd_origin
         self.account_id = account_id
         self.api_token = api_token
+        self.proxies = proxies
 
         self.api_base_url = '{}/api/accounts/{}'.format(self.msrd_origin, self.account_id)
 
@@ -42,6 +43,12 @@ class MSRDClient(object):
             'Content-Type': 'application/json',
             'SpringfieldApiToken': self.api_token,
         })
+
+        if self.proxies:
+            log.debug('Disabling TLS cert validation, using proxies: %s',
+                      json.dumps(self.proxies, indent=2))
+            self.session.proxies = self.proxies
+            self.session.verify = False
 
     def display_account_info(self):
         r = self.session.get(self.api_base_url)
@@ -190,6 +197,7 @@ class Config(object):
             self.storage_account_id = config['azureStorageAccountId']
             self.storage_api_key = config['azureStorageApiKey']
             self.storage_container_name = config['azureStorageContainer']
+            self.proxies = config.get('proxies')
         except KeyError as e:
             log.error('Unable to find config key %s', e)
             exit(1)
@@ -255,6 +263,7 @@ def main():
         config.msrd_origin,
         config.msrd_account_id,
         config.msrd_api_token,
+        proxies=config.proxies,
     )
 
     os_images = msrd.get_os_images()
