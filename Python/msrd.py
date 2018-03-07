@@ -387,13 +387,11 @@ def main():
     # Create a temporary directory to set up job dependencies.
     tmp_dir = tempfile.mkdtemp()
 
-    # Copy the entire job directory into our temporary directory.
-    # TODO: Avoid this.
-    tmp_job_path = os.path.join(tmp_dir, job_name)
-    shutil.copytree(args.job_path, tmp_job_path)
+    # The base path of the archive to create, excluding the extension.
+    archive_base_path = os.path.join(tmp_dir, job_name)
 
     # Create an archive of the job target and its seed data.
-    job_archive_path = create_archive(tmp_job_path, job_name)
+    job_archive_path = create_archive(args.job_path, archive_base_path)
 
     # Create a script to deploy the above archive on the fuzzing VM.
     presubmit_script_path = create_presubmit_script(tmp_dir, job_name)
