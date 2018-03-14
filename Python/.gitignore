@@ -1,0 +1,4 @@
+venv
+*.pyc
+Config.json
+*.zip
