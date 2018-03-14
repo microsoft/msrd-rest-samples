@@ -281,9 +281,11 @@ def render_presubmit_install_script(job_name):
     return textwrap.dedent(template.format(job_name=job_name)).strip()
 
 
-# The job presubmission script is a PowerShell script to place. We will generate
-# it when creating the job, store it in Azure, then fetch and execute it from
-# the fuzzing VM.
+# The job presubmission script unzips the fuzz target and seed data to a fixed
+# location on the fuzzing VM. We will generate it when creating the job, store
+# it in Azure, then fetch and execute it from the fuzzing VM. The target and
+# data job parameters, `seedDir` and `testDriverExecutable`, can then be given
+# under the assumption that the presubmission script has been run.
 def create_presubmit_script(save_dir, job_name):
     """
     Generate a job presubmission PowerShell script named "Presubmit.ps1".
