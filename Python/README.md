@@ -64,8 +64,15 @@ There is also an optional flag `-v`, which enables verbose logging.
 The script configuration is a JSON file that specifies the origin of the MSRD
 REST API, the name of an Azure Storage "container" (which will be created if it
 doesn't already exist), and Azure Storage and MSRD account authentication data
-(which should **not** be tracked in version control). It also includes optional
-HTTP(S) proxy configuration info for the client's execution environment.
+(which should **not** be tracked in version control).
+
+The configuration file also includes optional HTTP(S) proxy configuration info
+for the client's execution environment. By default, TLS certificates are
+validated. The optional `verifyCerts` key can be set to `true` or `false` to
+enable or disable TLS certificate validation when using a proxy. `verifyCerts`
+can also be set to the path of a PEM-encoded root certificate or bundle to
+trust. You can read more about this
+[here](http://docs.python-requests.org/en/latest/user/advanced/#ssl-cert-verification).
 
 A template for this file (illustrating its schema) can be found in
 `ConfigTemplate.json`. Note that this file must be valid JSON, so your actual

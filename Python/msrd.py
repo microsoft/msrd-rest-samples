@@ -35,7 +35,7 @@ class MSRDClient(object):
     Encapsulates a subset of the MSRD HTTP API.
     """
 
-    def __init__(self, msrd_origin, account_id, api_token, proxies=None):
+    def __init__(self, msrd_origin, account_id, api_token, proxies=None, verifyCerts=True):
         """
         Args:
             msrd_origin: Origin for the API of the MSRD service.
@@ -49,6 +49,7 @@ class MSRDClient(object):
         self.account_id = account_id
         self.api_token = api_token
         self.proxies = proxies
+        self.verifyCerts = verifyCerts
 
         self.api_base_url = '{}/api/accounts/{}'.format(self.msrd_origin, self.account_id)
 
@@ -65,16 +66,20 @@ class MSRDClient(object):
 
         # Configure our session to use proxies, if we have them.
         if self.proxies:
-            log.debug('Disabling TLS cert validation, using proxies: %s',
-                      json.dumps(self.proxies, indent=2))
+            log.debug('Using proxies: %s', json.dumps(self.proxies, indent=2))
             self.session.proxies = self.proxies
 
-            # WARNING: we disable TLS cert validation under the assumption that
-            # the Requests library is unable to validate a proxy's self-signed
-            # cert.
+            # WARNING: Though we verify TLS certificates by default, we allow
+            # skipping validation for cases when the Requests library is unable
+            # to validate certificates, e.g. when using TLS interception with a
+            # self-signed root certificate. Users can also pass a path to a root
+            # certificate (or bundle) to trust.
             #
-            # More info: http://docs.python-requests.org/en/latest/user/advanced/#ssl-cert-verification
-            self.session.verify = False
+            # See: http://docs.python-requests.org/en/latest/user/advanced/#ssl-cert-verification
+            self.session.verify = self.verifyCerts
+
+            if not self.verifyCerts:
+                log.warning('Disabling TLS certificate validation')
 
     def display_account_info(self):
         """
@@ -337,6 +342,13 @@ class Config(object):
             # The "proxies" key is optional, so we use `get()` to default to
             # returning `None` instead of throwing a `KeyError`.
             self.proxies = config.get('proxies')  # todo: check for proper structure.
+
+            # Whether or not we should verify TLS certificates, or a root
+            # certificate (or bundle) to trust. Supports use cases where HTTP
+            # proxies cause certificate errors.
+            #
+            # See: http://docs.python-requests.org/en/latest/user/advanced/#ssl-cert-verification
+            self.verifyCerts = config.get('verifyCerts', True)
         except KeyError as e:
             log.error('Unable to find config key %s', e)
             exit(1)
@@ -418,6 +430,7 @@ def main():
         config.msrd_account_id,
         config.msrd_api_token,
         proxies=config.proxies,
+        verifyCerts=config.verifyCerts,
     )
 
     os_images = msrd.get_os_images()

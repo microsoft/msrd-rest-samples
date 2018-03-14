@@ -9,5 +9,7 @@
     "proxies": {
         "http": "127.0.0.1:8888",
         "https": "127.0.0.1:8888"
-    }
+    },
+    // Optional. Can be `true`, `false`, or a path to a PEM-encoded root cert or bundle.
+    "verifyCerts": "/path/to/my/cert.pem"
 }
