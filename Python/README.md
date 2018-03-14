@@ -96,10 +96,11 @@ in `msrd.py` for more info.
 ## Use with `DemoFuzz`
 
 To use this script with the `DemoFuzz` sample target, create a file called
-`ExampleConfig.json`, based on `ConfigTemplate.json`. You _must_ specify all
-fields except for `proxies`, which may be omitted. If you include a `proxies`,
-key, make sure you specify an origin for both the `http` and `https` keys.
+`Config.json`, based on `ConfigTemplate.json`. You _must_ specify all fields
+except for `proxies`, which may be omitted. If you include a `proxies`, key,
+make sure you specify an origin for both the `http` and `https` keys.
 
-Once this is done, you can create a job by running the `test.sh` script (which
-requires `bash`) from the directory `springfield-sdk-exampes/Python`. This
-script runs `msrd.py` with a fixed set of arguments.
+Once this is done, you can create a job by running the `test-demofuzz.sh` script
+(which requires `bash`) from the directory `springfield-sdk-exampes/Python`.
+This script just runs `msrd.py` with a fixed set of arguments to create a new
+fuzzing job, with `DemoFuzz` as the target.

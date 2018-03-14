@@ -4,7 +4,7 @@ set -e -o pipefail
 . venv/bin/activate
 set -u
 
-readonly config='ExampleConfig.json'
+readonly config='Config.json'
 readonly job_path='../SampleFuzzingJobs/Demofuzz'
 readonly job_params='JobParams.json'
 
