@@ -82,8 +82,15 @@ param(
         promptValidationSysprep = $false
     },
 
-    # Wether or not th job should be deleted after the first result is received
-    [switch] $deleteJobAfterTheFirstResult
+    # Whether or not the job should be deleted after the first result is received
+    [switch] $deleteJobAfterTheFirstResult,
+
+    # specifies the method of submission of the job. The options are
+    #   - normal: The job will provision a preparation machine where the dependencies will be installed before fuzzing.
+    #   - package: The job will bypass the provision of the preparation machine and go directly to the fuzzing step.
+    [Parameter(ParameterSetName='uploadBinariesToStorageAccount')]
+    [ValidateSet('normal', 'package', IgnoreCase = $true)]
+    $submissionType = 'normal'
 )
 
 <#
@@ -157,9 +164,10 @@ if ($testFileUrls) {
     $account = Login-AzureRmAccount -SubscriptionId $subscriptionId
 
     Write-Host "Uploading the archive with the test payload to a storage account"
+    $demofuzzUri = UploadFileToAzure $testZipPath
     $dependencyUris = `
         @(
-            UploadFileToAzure $testZipPath
+            $demofuzzUri
             # You can add any URL to files to be uploaded to the VM here
         )
 }
@@ -194,16 +202,42 @@ function Invoke-Rest(){
 
 $osImages = Invoke-Rest -Method GET -Uri "$springfieldUri/api/accounts/$accountId/osimages" -Verbose
 
-$commandParams =  @{
-    setup = @{
-            command = $preSubmissionCommand
-            downloadUris = $dependencyUris
-        }
-    testDriverParameters = $jobParameters
-} | ConvertTo-Json
+if ($submissionType -eq 'normal') {
+    $commandParams =  @{
+        setup = @{
+                command = $preSubmissionCommand
+                downloadUris = $dependencyUris
+            }
+        testDriverParameters = $jobParameters
+    } | ConvertTo-Json
+} elseif ($submissionType -eq 'package') {
+    $commandParams =  @{
+        setup =
+            @{
+                package = @{
+                    command = ''
+                    destinationFolder = 'c:\demofuzz'
+                    fileInformations = @(
+                      @{
+                        name = "demofuzz.zip"
+                        url = $demofuzzUri
+                        action = "Unzip"
+                      }
+                    )
+                  }
+            }
+        submit =
+            @{
+                testDriverParameters = $jobParameters
+            }
+    } | ConvertTo-Json -Depth 5
+} else {
+    throw "Invalid submission type: $submissionType"
+}
 
-Write-Host "Creating a job"
-$jobInfo = Invoke-Rest -Method POST -Uri "$springfieldUri/api/accounts/$accountId/jobs?osImageId=$($osImages[0].Id)" -Body $commandParams -Verbose
+
+Write-Host "Creating a job: $commandParams"
+$jobInfo = Invoke-Rest -Method POST -Uri "$springfieldUri/api/accounts/$accountId/jobs?osImageId=$($osImages[0].Id)&submissionType=$submissionType" -Body $commandParams -Verbose
 
 $jobId = $jobInfo.Id
 Write-Host "Job $jobId created"
