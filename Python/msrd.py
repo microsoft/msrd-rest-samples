@@ -108,7 +108,56 @@ class MSRDClient(object):
 
         return os_images
 
-    def create_job(self, job_path, job_params_path, download_urls, os_image):
+    def create_job_parameters(self, job_params_path, submission_type, job_name, job_blob_url, presubmit_blob_url):
+        """
+        Create the parameters for the job submission
+
+        Args:
+            job_params_path: Path to JSON file containing job parameters.
+            submission_type: the type of submission (normal or package)
+            job_name: the name of the job.
+            job_blob_url: url to the zip file containing the package dependency.
+            presubmit_blob_url: url to the presubmission script
+        """
+        with open(job_params_path) as f:
+            job_params = json.load(f)
+
+            if submission_type == 'normal':
+                return {
+                        'setup': {
+                            'command': PRESUBMIT_COMMAND,
+                            'downloadUris': [
+                                                job_blob_url,
+                                                presubmit_blob_url,
+                                            ],
+                        },
+                        'testDriverParameters': job_params,
+                    }
+            elif submission_type == 'package':
+                return {
+                        'setup': {
+                            'package': {
+                                'command': '',
+                                'destinationFolder': "c:\\{}".format(job_name),
+                                'fileInformations': [
+                                    {
+                                        'name': "{}.zip".format(job_name),
+                                        'url': job_blob_url,
+                                        'action': "Unzip"
+                                    }
+                                ]
+                            }
+                        },
+                        "submit":{
+                            'testDriverParameters': job_params
+                        }
+                    }
+            else:
+                error = 'Invalid submission type {}'.format(submission_type)
+                raise ValueError(error)
+
+
+    def create_job(self, job_path, os_image, job_submission_parameters, submission_type):
         """
         Create a new job from a fuzzing target, a JSON file of job parameters,
         a list of job dependency URLs, and an OS image.
@@ -117,36 +166,19 @@ class MSRDClient(object):
 
         Args:
             job_path: Path to directory of target application and seed data.
-            job_params_path: Path to JSON file containing job parameters.
-            download_urls: List of URLs to be downloaded on fuzzing VM.
+            job_submission_parameters: The paramters of teh job submission.
             os_image: Type of OS image to use, as a dict from `get_os_images()`.
         """
-
-        job_name = os.path.basename(os.path.normpath(job_path))
-
-        with open(job_params_path) as f:
-            job_params = json.load(f)
-
-        # Serialized as JSON for POST body.
-        data = {
-            'setup': {
-                'command': PRESUBMIT_COMMAND,
-                'downloadUris': download_urls,
-            },
-            'testDriverParameters': job_params,
-        }
-
-        log.debug('Sending job data: %s', json.dumps(data, indent=2))
-
         # Query parameters.
         params = {
             'osImageId': os_image['id'],
+            'submission_type': submission_type
         }
 
         url = '{}/jobs'.format(self.api_base_url)
-        r = self.session.post(url, json=data, params=params)
+        r = self.session.post(url, json=job_submission_parameters, params=params)
 
-        log.debug('Sent request: %s', r.request.body)
+        log.debug('Sent request: %s body %s', r.url, r.request.body)
 
         job = r.json()
 
@@ -378,6 +410,14 @@ def parse_args():
         help='Use debug-level logging'
     )
 
+    arg_parser.add_argument(
+        '--submission_type',
+        default='normal',
+        help="""specifies the method of submission of the job. The options are
+                - normal: The job will provision a preparation machine where the dependencies will be installed before fuzzing.
+                - package: The job will bypass the provision of the preparation machine and go directly to the fuzzing step."""
+    )
+
     return arg_parser.parse_args()
 
 
@@ -419,12 +459,6 @@ def main():
     # TODO: Don't just ignore an error here, but catch and log it.
     shutil.rmtree(tmp_dir, ignore_errors=True)
 
-    # These files will be downloaded on the fuzzing VM.
-    download_urls = [
-        job_blob_url,
-        presubmit_blob_url,
-    ]
-
     msrd = MSRDClient(
         config.msrd_origin,
         config.msrd_account_id,
@@ -445,10 +479,13 @@ def main():
     windows_images = [img for img in os_images
                       if img['osType'] == 'Windows']
 
+    submission_parameters = msrd.create_job_parameters(args.job_params, args.submission_type, job_name, job_blob_url, presubmit_blob_url)
+
     job = msrd.create_job(
         args.job_path,
-        args.job_params,
-        download_urls, windows_images[0]
+        windows_images[0],
+        submission_parameters,
+        args.submission_type
     )
 
 
