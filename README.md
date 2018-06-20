@@ -5,6 +5,7 @@ This repository contains samples of how to programmatically access the Springfie
 **Prerequisite:**
 - Must have a Springfield account enabled for SDK use.
 - Must have generated an API Token
+- Must have the Azure SDK installed
 
 *For detailed instructions [click here](https://github.com/Microsoft/springfield-sdk-samples/wiki/Prerequisites)*
 
@@ -22,7 +23,7 @@ It demonstrates how to:
   - Waits until at least one result is reported
   - Deletes the job
 
-The sample below includes parameters of an Azure SubscriptionID and Storage Account.  *Note:  It is not a Springfield requirement to have an Azure subscription or an Azure storage account if the test files are already publically available from an http address.  You can instead upload your binaries and seed files to any internet location accessible from an HTTP URL.*
+The sample below includes parameters of an Azure SubscriptionID and Storage Account.  *Note:  It is not a Springfield requirement to have an Azure subscription or an Azure storage account if the test files are already publicly available from an http address.  You can instead upload your binaries and seed files to any internet location accessible from an HTTP URL.*
 
 Calling the Powershell sample:
 

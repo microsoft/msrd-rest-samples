@@ -5,41 +5,65 @@
 .DESCRIPTION
   The script performs the following:
     - Create a Springfield job
-    - Wait for preparation machine associated with the job to be ready 
+    - Wait for preparation machine associated with the job to be ready
     - Inject test application to be fuzzed and associated seed files into the virtual machine
-    - Submit the job 
+    - Submit the job
     - Monitor the job progress until it starts fuzzing
     - Wait until at least one result is reported
-    - Delete the job 
+    - Delete the job
 .REMARK
     The API token can be generated from the Springfield website on the setting page
 #>
 param(
     # URL to the Springfield service
-    $springfieldUri = "https://www.alamohendersonville.com",
-    
+    $springfieldUri = "https://www.microsoftsecurityriskdetection.com",
+
     # Springfield Account Id
     [Parameter(Mandatory=$true)]
     $accountId,
-    
+
     # Springfield API token obtained from the settings page in Springfield portal
     [Parameter(Mandatory=$true)]
     $apiToken,
-    
+
     # Azure subscription ID
     [Parameter(Mandatory=$true)]
     $subscriptionId,
 
+    # The path to the folder containing the application and seed files to fuzz
+    [Parameter(ParameterSetName='uploadBinariesToStorageAccount')]
+    $testFileFolder = "$PSScriptRoot\..\SampleFuzzingJobs\Demofuzz",
+
     # Name of Azure storage account where to upload the test payload
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, ParameterSetName='uploadBinariesToStorageAccount')]
     $storageAccountName,
 
     # Azure storage account key
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, ParameterSetName='uploadBinariesToStorageAccount')]
     $storageAccountKey,
 
-    # The path to the folder containing the application to fuzz
-    $testFileFolder = "$PSScriptRoot\..\SampleFuzzingJobs\Demofuzz",
+    # The name of the container in the storage account where the binaries will be uploaded.
+    [Parameter(ParameterSetName='uploadBinariesToStorageAccount')]
+    $containerName = "sample",
+
+    # The list of urls containing the application to be fuzzed and its dependencies
+    # The content at these urls will be downloaded to the fuzzing machine
+    [Parameter(Mandatory=$true, ParameterSetName='testFileFolderUrl')]
+    [Uri[]] $testFileUrls,
+
+    # Optional command to execute before the submission of the job
+    # this can be used to copy the the files to a specific location for example
+    $preSubmissionCommand =
+        "powershell.exe -ExecutionPolicy Unrestricted -Command `"" +
+        "`$ErrorActionPreference='stop'; " +
+        "`$zipFilePath = Join-Path (pwd).Path Demofuzz.zip; " +
+        "`$outputDir = 'c:\DemoFuzz'; " +
+        "if(Test-Path `$outputDir) { " +
+            "rm -force -Recurse `$outputDir " +
+        "} ;" +
+        "md `$outputDir ;" +
+        "[System.Reflection.Assembly]::LoadWithPartialName('System.IO.Compression.FileSystem') | Out-Null; " +
+        "[System.IO.Compression.ZipFile]::ExtractToDirectory(`$zipFilePath, `$outputDir)`"" ,
 
     # Set of job parameters. This correspond to the answer to the wizard's questionnaire
     $jobParameters = @{
@@ -56,11 +80,18 @@ param(
         singleOsProcess = $true
         sysprepCompleted = $false
         promptValidationSysprep = $false
-    } 
-)
+    },
 
-# Extract name of sample from directory name
-$sampleName = $(Split-Path $testFileFolder -Leaf)
+    # Whether or not the job should be deleted after the first result is received
+    [switch] $deleteJobAfterTheFirstResult,
+
+    # specifies the method of submission of the job. The options are
+    #   - normal: The job will provision a preparation machine where the dependencies will be installed before fuzzing.
+    #   - package: The job will bypass the provision of the preparation machine and go directly to the fuzzing step.
+    [Parameter(ParameterSetName='uploadBinariesToStorageAccount')]
+    [ValidateSet('normal', 'package', IgnoreCase = $true)]
+    $submissionType = 'normal'
+)
 
 <#
 .SYNOPSIS
@@ -68,9 +99,7 @@ $sampleName = $(Split-Path $testFileFolder -Leaf)
 #>
 function UploadFileToAzure (
     # Path to the file to be uploaded to the storage account
-    [Parameter(Mandatory=$true)] $sourceFileName,
-    
-    $containerName = "sample"
+    [Parameter(Mandatory=$true)] $sourceFileName
 ) {
     $destContext = New-AzureStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $storageAccountKey
     $container = Get-AzureStorageContainer -Context $destContext -Name $containerName -ErrorAction SilentlyContinue
@@ -92,30 +121,24 @@ function UploadFileToAzure (
 function CreateTestZipFile(
     # Path to the source directory containing the test payload
     [Parameter(Mandatory=$true)] $testFileFolder,
-    # The paramters of the job
+    # The parameters of the job
     [Parameter(Mandatory=$true)] $jobParameters
 ) {
+    # Extract name of sample from directory name
+    $sampleName = $(Split-Path $testFileFolder -Leaf)
+
     Write-Host "Creating zip file containing the application to test"
 
     $tmpDir = [System.IO.Path]::GetTempFileName()
-    rm $tmpDir
-    $dir = md $tmpDir
-    
+    Remove-Item $tmpDir
+    $dir = mkdir $tmpDir
+
     # Copy test driver and seed files
     Copy-Item $testFileFolder $tmpDir -Recurse
     $testZipPath = "$tmpDir\$sampleName.zip"
     $directoryToZip = "$tmpDir\$sampleName"
 
-    # Copy job parameters
-    $jobParameters | ConvertTo-Json | Set-Content -Path "$directoryToZip\JobParams.json"
 
-    # Generate script to automate job submission
-    $submitJobScriptContent = @"
-        '$($jobParameters | ConvertTo-Json)' | Set-Content c:\Springfield\JobParams.json
-        & c:\Springfield\Springfield.Prevalidation.UI.Console\Springfield.Prevalidation.UI.Console.exe -unattend
-"@
-    Set-Content -Path "$directoryToZip\install.ps1" -Value $submitJobScriptContent
-    
     Add-Type -assembly "system.io.compression.filesystem"
     if (Test-Path $testZipPath){
         Write-host "$testZipPath already exist: removing it"
@@ -127,89 +150,117 @@ function CreateTestZipFile(
     return $testZipPath
 }
 
-#####
-# Preparing the test payload to be copied onto the VM. This includes test driver binaries, seed files
-# and the job prameters (a Json blob containing answer to the wizard's questions)
-$testZipPath = CreateTestZipFile -testFileFolder $testFileFolder -jobParameters $jobParameters
+if ($testFileUrls) {
+    $dependencyUris = $testFileUrls
+} else {
+    #####
+    # Preparing the test payload to be copied onto the VM. This includes test driver binaries, seed files
+    # and the job parameters (a Json blob containing answers to the wizard's questions)
+    $testZipPath = CreateTestZipFile -testFileFolder $testFileFolder -jobParameters $jobParameters
 
-#####
-# Upload all the test files to the azure storage account
-Import-Module AzureRm.Storage
-$account = Login-AzureRmAccount -SubscriptionId $subscriptionId
+    #####
+    # Upload all the test files to the azure storage account
+    Import-Module AzureRm.Storage
+    $account = Login-AzureRmAccount -SubscriptionId $subscriptionId
 
-Write-Host "Uploading the archive with the test payload to a storage account"
-$dependencyUris = `
-    @(
-        UploadFileToAzure $testZipPath
-        UploadFileToAzure "$PSScriptRoot\UnzipAndRun.ps1"
-        # You can add any URL to files to be uploaded to the VM here
-    )
+    Write-Host "Uploading the archive with the test payload to a storage account"
+    $demofuzzUri = UploadFileToAzure $testZipPath
+    $dependencyUris = `
+        @(
+            $demofuzzUri
+            # You can add any URL to files to be uploaded to the VM here
+        )
+}
 
 #####
 # Create the Springfield Job and monitor progress
-
-$pollingInternavalInSeconds = 60*3
+$pollingIntervalInSeconds = 60*1
 
 $headers = @{
-    "SpringfieldApiToken" = $apiToken 
+    "SpringfieldApiToken" = $apiToken
     "Content-Type" ="application/json"
     }
 
-$osImages = Invoke-RestMethod -Method GET -Uri "$springfieldUri/api/accounts/$accountId/osimages" -Headers $headers -Verbose
+function Invoke-Rest(){
+    param(
+        [Microsoft.PowerShell.Commands.WebRequestMethod] $method,
+        [System.Uri] $uri,
+        [System.Object] $Body = $null,
+        [string] $ContentType = "application/json",
+        [switch] $Verbose)
+    $result = Invoke-WebRequest -Method $method -Uri $uri -Headers $headers -Body $Body -ContentType $ContentType -Verbose:$Verbose
+    if ($result.StatusCode -ge 200 -and $result.StatusCode -lt 300  ){
+        if ($result.RawContentLength -gt 0) {
+            return ConvertFrom-Json $result.Content
+        } else {
+            return ""
+        }
+    } else{
+        throw "Request failed: $($result.RawContent)"
+    }
+}
 
-Write-Host "Creating a job"
-$jobInfo = Invoke-RestMethod -Method POST -Uri "$springfieldUri/api/accounts/$accountId/jobs?osImageId=$($osImages[0].Id)" -Headers $headers -Verbose
+$osImages = Invoke-Rest -Method GET -Uri "$springfieldUri/api/accounts/$accountId/osimages" -Verbose
+
+if ($submissionType -eq 'normal') {
+    $commandParams =  @{
+        setup = @{
+                command = $preSubmissionCommand
+                downloadUris = $dependencyUris
+            }
+        testDriverParameters = $jobParameters
+    } | ConvertTo-Json
+} elseif ($submissionType -eq 'package') {
+    $commandParams =  @{
+        setup =
+            @{
+                package = @{
+                    command = ''
+                    destinationFolder = 'c:\demofuzz'
+                    fileInformations = @(
+                      @{
+                        name = "demofuzz.zip"
+                        url = $demofuzzUri
+                        action = "Unzip"
+                      }
+                    )
+                  }
+            }
+        submit =
+            @{
+                testDriverParameters = $jobParameters
+            }
+    } | ConvertTo-Json -Depth 5
+} else {
+    throw "Invalid submission type: $submissionType"
+}
+
+
+Write-Host "Creating a job: $commandParams"
+$jobInfo = Invoke-Rest -Method POST -Uri "$springfieldUri/api/accounts/$accountId/jobs?osImageId=$($osImages[0].Id)&submissionType=$submissionType" -Body $commandParams -Verbose
 
 $jobId = $jobInfo.Id
-Write-Host "job $jobId created"
+Write-Host "Job $jobId created"
 
-while (-not $jobInfo.IsPreparationVMReady) {
-    Write-Host "Waiting for the preparation vm to be ready"
-    Start-Sleep -Seconds $pollingInternavalInSeconds
-    $jobInfo = Invoke-RestMethod -Method GET -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId" -Headers $headers -Verbose
-}
-
-Write-Host "Retrieving the machine name"
-$machineName = Invoke-RestMethod -Method GET -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId/customermachine" -Headers $headers -Verbose
-Write-Host "Machine name $machineName retrieved"
-
-# The command to execute on the job preparation machine 
-$executionCommand = "powershell.exe -ExecutionPolicy Unrestricted -Command `".\UnzipAndRun.ps1 -zipFile $sampleName.zip -scriptToRun install.ps1 -outputDir 'c:\$sampleName'`""
-
-$commandParams = @{
-    "command" = $executionCommand
-    "dependencyUris" = $dependencyUris
-} | ConvertTo-Json
-
-Write-Host "Submitting command for execution $commandParams"
-$commandInfo = Invoke-RestMethod -Method POST -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId/machines/$machineName/command" -Headers $headers -Body $commandParams -ContentType 'application/json' -Verbose
-
-while ($commandInfo.ExecutionState.IsPendingState) {
-    Write-Host "Waiting for the command to finish executing"
-    Start-Sleep -Seconds $pollingInternavalInSeconds
-    $commandInfo = Invoke-RestMethod -Method GET -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId/machines/$machineName/command/$($commandInfo.CommandId)" -Headers $headers -Verbose
-}
-
-if ($commandInfo.ExecutionState.IsErrorState) {
-    throw "Error during execution of custom command : $($commandInfo.ExecutionState.GetError)"
-}
 
 Write-Host "Monitoring command job status until fuzzing or error"
 while (-not $jobInfo.IsFuzzing) {
     Write-Host "Waiting for the job to start fuzzing"
-    Start-Sleep -Seconds $pollingInternavalInSeconds
-    $jobInfo = Invoke-RestMethod -Method GET -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId" -Headers $headers -Verbose
+    Start-Sleep -Seconds $pollingIntervalInSeconds
+    $jobInfo = Invoke-Rest -Method GET -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId" -Verbose
 }
 
 Write-Host "Poll until we get at least one result"
-$results = Invoke-RestMethod -Method GET -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId/results" -Headers $headers -Verbose
+$results = Invoke-Rest -Method GET -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId/results" -Verbose
 
 while ($results.Count -eq 0){
-    Start-Sleep -Seconds $pollingInternavalInSeconds
-    $results = Invoke-RestMethod -Method GET -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId/results" -Headers $headers -Verbose
+    Start-Sleep -Seconds $pollingIntervalInSeconds
+    $results = Invoke-Rest -Method GET -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId/results" -Verbose
 }
 
-Write "Got $($results.Count) results $results"
+Write-Host "Got $($results.Count) results $results"
 Write-Host "Deleting the job"
 
-Invoke-RestMethod -Method DELETE -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId" -Headers $headers -Verbose
+if ($deleteJobAfterTheFirstResult) {
+    Invoke-Rest -Method DELETE -Uri "$springfieldUri/api/accounts/$accountId/jobs/$jobId" -Verbose
+}
