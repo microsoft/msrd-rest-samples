@@ -28,7 +28,7 @@ The sample below includes parameters of an Azure SubscriptionID and Storage Acco
 Calling the Powershell sample:
 
     . PowershellSample.ps1 `
-        -springfieldUri "https://www.alamohendersonville.com" `
+        -springfieldUri "https://www.microsoftsecurityriskdetection.com" `
         -accountId <The GUID for your account goes here> `
         -apiToken <Your Api token goes here> `
         -subscriptionId <You Azure subscription ID goes here> `
@@ -41,7 +41,7 @@ Calling the Powershell sample:
 
 Springfield SDK exposes its API through a documented Swagger interface. The URL for the Springfield swagger documentation is
 
-https://www.alamohendersonville.com/swagger
+https://www.microsoftsecurityriskdetection.com/swagger
 
 Once navigated to the URL, expand the link 'ServiceApi' found at the top left of the page. The complete list of REST API operations are included there.  The Swagger UI lets you interact with the Springfield service and call the APIs dynamically.
 
