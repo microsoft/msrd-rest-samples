@@ -27,7 +27,7 @@ param(
     $apiToken,
 
     # Azure subscription ID
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, ParameterSetName='uploadBinariesToStorageAccount')]
     $subscriptionId,
 
     # The path to the folder containing the application and seed files to fuzz
@@ -53,17 +53,7 @@ param(
 
     # Optional command to execute before the submission of the job
     # this can be used to copy the the files to a specific location for example
-    $preSubmissionCommand =
-        "powershell.exe -ExecutionPolicy Unrestricted -Command `"" +
-        "`$ErrorActionPreference='stop'; " +
-        "`$zipFilePath = Join-Path (pwd).Path Demofuzz.zip; " +
-        "`$outputDir = 'c:\DemoFuzz'; " +
-        "if(Test-Path `$outputDir) { " +
-            "rm -force -Recurse `$outputDir " +
-        "} ;" +
-        "md `$outputDir ;" +
-        "[System.Reflection.Assembly]::LoadWithPartialName('System.IO.Compression.FileSystem') | Out-Null; " +
-        "[System.IO.Compression.ZipFile]::ExtractToDirectory(`$zipFilePath, `$outputDir)`"" ,
+    $preSubmissionCommand,
 
     # Set of job parameters. This correspond to the answer to the wizard's questionnaire
     $jobParameters = @{
@@ -86,11 +76,11 @@ param(
     [switch] $deleteJobAfterTheFirstResult,
 
     # specifies the method of submission of the job. The options are
-    #   - normal: The job will provision a preparation machine where the dependencies will be installed before fuzzing.
+    #   - VM: The job will provision a preparation machine where the dependencies will be installed before fuzzing.
     #   - package: The job will bypass the provision of the preparation machine and go directly to the fuzzing step.
     [Parameter(ParameterSetName='uploadBinariesToStorageAccount')]
-    [ValidateSet('normal', 'package', IgnoreCase = $true)]
-    $submissionType = 'normal'
+    [ValidateSet('VM', 'package', IgnoreCase = $true)]
+    $submissionType = 'VM'
 )
 
 <#
@@ -202,7 +192,21 @@ function Invoke-Rest(){
 
 $osImages = Invoke-Rest -Method GET -Uri "$springfieldUri/api/accounts/$accountId/osimages" -Verbose
 
-if ($submissionType -eq 'normal') {
+if ($submissionType -eq 'VM') {
+    if (-not $preSubmissionCommand) {
+        $preSubmissionCommand =
+            "powershell.exe -ExecutionPolicy Unrestricted -Command `"" +
+                "`$ErrorActionPreference='stop'; " +
+                "`$zipFilePath = Join-Path (pwd).Path Demofuzz.zip; " +
+                "`$outputDir = 'c:\DemoFuzz'; " +
+                "if(Test-Path `$outputDir) { " +
+                    "rm -force -Recurse `$outputDir " +
+                "} ;" +
+                "md `$outputDir ;" +
+                "[System.Reflection.Assembly]::LoadWithPartialName('System.IO.Compression.FileSystem') | Out-Null; " +
+                "[System.IO.Compression.ZipFile]::ExtractToDirectory(`$zipFilePath, `$outputDir)`""
+    }
+
     $commandParams =  @{
         setup = @{
                 command = $preSubmissionCommand

@@ -114,7 +114,7 @@ class MSRDClient(object):
 
         Args:
             job_params_path: Path to JSON file containing job parameters.
-            submission_type: the type of submission (normal or package)
+            submission_type: the type of submission (VM or package)
             job_name: the name of the job.
             job_blob_url: url to the zip file containing the package dependency.
             presubmit_blob_url: url to the presubmission script
@@ -122,7 +122,7 @@ class MSRDClient(object):
         with open(job_params_path) as f:
             job_params = json.load(f)
 
-            if submission_type == 'normal':
+            if submission_type == 'VM':
                 return {
                         'setup': {
                             'command': PRESUBMIT_COMMAND,
@@ -412,9 +412,9 @@ def parse_args():
 
     arg_parser.add_argument(
         '--submission_type',
-        default='normal',
+        default='VM',
         help="""specifies the method of submission of the job. The options are
-                - normal: The job will provision a preparation machine where the dependencies will be installed before fuzzing.
+                - VM: The job will provision a preparation machine where the dependencies will be installed before fuzzing.
                 - package: The job will bypass the provision of the preparation machine and go directly to the fuzzing step."""
     )
 
