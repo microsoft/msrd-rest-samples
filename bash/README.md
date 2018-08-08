@@ -4,12 +4,13 @@
 
 The `msrd.sh` shell script is an example of how to use the MSRD HTTP API to
 perform automated Linux job submission. It should only be considered an example
-of automation, and uses a mix of SDK API calls and regular shell scripting.
+of automation, and uses a mix of SDK API calls and regular shell scripting. In
+the future, the job submission portion of this script will be replaced by API
+calls that use the MSRD SDK.
 
-Though not an official stable SDK tool or reusable component, it can be used as
-a starting point for custom Linux job submission scripts. In a production
-scenario, it would be enhanced with additional logging, exhaustive error
-handling, &c.
+This sample can be used as a starting point for custom Linux job submission
+scripts. In a production scenario, it would be enhanced with additional logging,
+exhaustive error handling, &c.
 
 ## Requirements
 
