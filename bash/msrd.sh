@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
-set -e -o pipefail
 
+# Check if the user is invoking the script under `bash`, vs. e.g. `sh`.
+if [ -z "${BASH_VERSION}" ]; then
+  echo 'ERROR: not using `bash` shell\n' >&2
+  echo 'This script uses features specific to the `bash` shell.\n' >&2
+  echo 'Please run this script using `bash msrd.sh` or `./msrd.sh`.' >&2
+  exit 1
+fi
+
+# Fail fast on errors.
+set -e -o pipefail
 
 # Base origin of the MSRD environment in use, here set to production.
 readonly MSRD_ORIGIN='https://www.microsoftsecurityriskdetection.com'

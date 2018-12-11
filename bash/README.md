@@ -17,6 +17,7 @@ exhaustive error handling, &c.
 The following dependencies are likely already installed on your system, but
 worth noting:
 
+- `bash` shell
 - `curl`
 - `scp`
 - `ssh`
@@ -37,7 +38,9 @@ sudo apt install curl jq sshpass
 ## Script Steps
 
 To run the script against the sample fuzz target, set the `$ACCOUNT_ID` and
-`$API_TOKEN` script variables, then invoke `./msrd.sh`.
+`$API_TOKEN` script variables, then invoke `./msrd.sh` or `bash msrd.sh`.
+**Note:** invoking as `sh msrd.sh` will typically fail, as this script uses
+features specific to the `bash` shell.
 
 The script then attempts to:
 
