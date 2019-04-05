@@ -46,3 +46,6 @@ were correctly generated and uploaded to Azure Storage.
 You can further check that the generated target archive and script look as
 expected by getting their access URLs from the verbose script output, and
 downloading them before they expire.
+
+# Automated Testing
+To run the automated unit tests use the standard python3 `python -m unittest`

@@ -1,0 +1,15 @@
+{
+    "seedDir": "//DemofuzzLinux//data",
+    "seedExtension": ".bin",
+    "testDriverExecutable": "//DemofuzzLinux//demofuzz.exe",
+    "testDriverExeType": "x86",
+    "testDriverParameters": "\"%testfile%\"",
+    "closesItself": true,
+    "maxDurationSeconds": 5,
+    "runsInLessThan5": true,
+    "canRunRepeat": true,
+    "canTestDriverBeRenamed": true,
+    "singleOsProcess": true,
+    "sysprepCompleted": false,
+    "promptValidationSysprep": false
+}

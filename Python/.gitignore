@@ -1,4 +1,8 @@
 venv
 *.pyc
 Config.json
+ConfigLinux.json
+ConfigWindows.json
 *.zip
+.vscode/
+__pycache__
