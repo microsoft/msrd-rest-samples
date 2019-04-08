@@ -1,6 +1,5 @@
 from .azure import AzureStorageContainer
-
-from pathlib import Path
+from .filechecks import (file_exists, file_size_in_bytes, files_must_not_be_more_than, MAX_FILE_SIZE_FOR_PUT_API)
 
 
 class FileUpload():
@@ -21,6 +20,20 @@ class FileUpload():
         self.log.debug('job_archive_path: %s', job_archive_path)
         self.log.debug('presubmit_script_path: %s', presubmit_script_path)
 
+        if not file_exists(job_archive_path):
+            self.log.error(
+                'Job archive file %s does not exist.',
+                job_archive_path
+            )
+            exit(1)
+
+        if not file_exists(presubmit_script_path):
+            self.log.error(
+                'Presubmit script file %s does not exist.',
+                presubmit_script_path
+            )
+            exit(1)
+
         if storage_type_lower == 'azure':
             storage = AzureStorageContainer(
                 self.log,
@@ -39,6 +52,15 @@ class FileUpload():
 
             return (job_blob_url, presubmit_blob_url, )
         elif storage_type_lower == 'api':
+            files_must_not_be_more_than(
+                self.log,
+                [
+                    job_archive_path,
+                    presubmit_script_path
+                ],
+                limit=MAX_FILE_SIZE_FOR_PUT_API
+            )
+
             job_blob_url = self.msrd.put_file_upload_via_api(job_archive_path)
             presubmit_blob_url = self.msrd.put_file_upload_via_api(presubmit_script_path)
 
