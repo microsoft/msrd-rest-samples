@@ -47,7 +47,7 @@ class MSRDClient(object):
         self.logger = logger_object
 
         self.api_base_url = '{}/api/accounts/{}'.format(self.msrd_origin, self.account_id)
-        self.files_upload_url = '{}/files/accounts/{}/session/'.format(self.msrd_origin, self.account_id)
+        self.files_upload_url = '{}/files/accounts/{}/session'.format(self.msrd_origin, self.account_id)
 
         self._init_session()
 
@@ -114,7 +114,7 @@ class MSRDClient(object):
 
         TODO - Validate
         """
-        self.logger.debug('Files Upoad URL: %s', self.files_upload_url)
+        self.logger.debug('Files Upload URL: %s', self.files_upload_url)
         self.logger.debug('File to upload: %s', file_name)
 
         with open(file_name, 'rb') as f:
