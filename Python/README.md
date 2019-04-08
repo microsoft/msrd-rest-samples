@@ -16,7 +16,7 @@ library][1] to easily upload files (such as scripts and fuzz targets) and
 obtain time-limited file download URLs using Azure [Shared Access Signatures][2].
 
 You have the option of using the MSDR File Upload PUT based API for packages
-that are under 10 mb in size.
+that are under 4 mb in size.
 
 [1]: https://azure-storage.readthedocs.io/
 [2]: https://docs.microsoft.com/en-us/azure/storage/common/storage-dotnet-shared-access-signature-part-1
