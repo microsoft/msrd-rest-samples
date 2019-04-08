@@ -44,9 +44,12 @@ class ScriptingTestSuite(unittest.TestCase):
             "icon": "icons/Windows.png"
         }
 
+        unknown_os = {}
+
         assert is_linux(log, redhat)
         assert not is_linux(log, windows_server_2k8)
         assert not is_linux(log, windows_server_datacenter)
+        assert not is_linux(log, unknown_os)
 
 if __name__ == '__main__':
 
