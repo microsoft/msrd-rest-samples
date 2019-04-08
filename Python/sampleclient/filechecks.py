@@ -19,26 +19,28 @@ def file_size_in_bytes(file_path):
 MAX_FILE_SIZE_FOR_PUT_API = int(1024 * 1024 * 4)
 
 
-def files_must_not_be_more_than(log, files, limit):
-    '''Guards against files with size exceeding a limit being attempted.'''
+def error_out(log, error_string):
+    if log and error_string:
+        log.error(error_string)
+    exit(1)
+
+
+def files_must_not_be_more_than(files, limit):
+    '''
+    Guards against files with size exceeding a limit being attempted.
+    Returns a tuple (int bytes_over_limit, bool error)
+    '''
+    limit = int(limit)
     total = 0
     for file in files:
         bytes = file_size_in_bytes(file)
 
         if bytes < 0:
-            if log:
-                log.error(
-                    'File %s does not exist.',
-                    file
-                )
-            exit(1)
+            return (0, True, )
 
         total = total + int(bytes)
 
-        if total > MAX_FILE_SIZE_FOR_PUT_API - 1:
-            if log:
-                log.error(
-                    'File %s would exceed the max allowed size by %s bytes.',
-                    total - MAX_FILE_SIZE_FOR_PUT_API
-                )
-            exit(1)
+        if total > limit - 1:
+            return (total - limit, True, )
+
+    return 0, False
