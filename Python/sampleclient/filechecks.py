@@ -19,12 +19,6 @@ def file_size_in_bytes(file_path):
 MAX_FILE_SIZE_FOR_PUT_API = int(1024 * 1024 * 4)
 
 
-def error_out(log, error_string):
-    if log and error_string:
-        log.error(error_string)
-    exit(1)
-
-
 def files_must_not_be_more_than(files, limit):
     '''
     Guards against files with size exceeding a limit being attempted.
