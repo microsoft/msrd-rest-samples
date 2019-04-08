@@ -1,4 +1,5 @@
 import json
+from .error import error_out
 
 
 class Config(object):
@@ -38,5 +39,4 @@ class Config(object):
             # See: http://docs.python-requests.org/en/latest/user/advanced/#ssl-cert-verification
             self.verifyCerts = config.get('verifyCerts', True)
         except KeyError as e:
-            self.log.error('Unable to find config key %s', e)
-            exit(1)
+            error_out(self.log, "Unable to find config key {}".format(e))

@@ -1,3 +1,4 @@
+from .error import error_out
 from .logger import log, set_logging_debug
 from .msrdclient import MSRDClient
 from .filestorage import FileUpload

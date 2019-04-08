@@ -1,4 +1,5 @@
 import shutil
+from .error import error_out
 
 
 def create_archive(log, src_dir, archive_base_name):
@@ -17,8 +18,7 @@ def create_archive(log, src_dir, archive_base_name):
 
     # We could use other formats, but just require `zip` for now.
     if 'zip' not in archive_formats:
-        log.error('Unable to create `.zip` files, aborting.')
-        exit(1)
+        error_out(log, 'Unable to create `.zip` files, aborting.')
 
     log.debug(
         'Creating zip archive with base name `%s` and root dir `%s`.',

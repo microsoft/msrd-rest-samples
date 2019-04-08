@@ -20,9 +20,7 @@ LINUX_DROP_PATH_ROOT = "/"
 
 def is_linux(log, os_image):
     if not os_image or 'osType' not in os_image:
-        if log:
-            log.error('Malformed image selected for is_linux check. Image: %s', json.dumps(os_image))
-        exit(1)
+        return False
 
     os_type = str(os_image['osType']).lower()
 

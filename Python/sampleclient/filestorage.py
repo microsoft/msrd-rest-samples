@@ -1,5 +1,6 @@
 from .azure import AzureStorageContainer
 from .filechecks import (file_exists, file_size_in_bytes, files_must_not_be_more_than, MAX_FILE_SIZE_FOR_PUT_API)
+from .error import error_out
 
 
 class FileUpload():
@@ -21,18 +22,10 @@ class FileUpload():
         self.log.debug('presubmit_script_path: %s', presubmit_script_path)
 
         if not file_exists(job_archive_path):
-            self.log.error(
-                'Job archive file %s does not exist.',
-                job_archive_path
-            )
-            exit(1)
+            error_out(self.log, 'Job archive file {} does not exist.'.format(job_archive_path))
 
         if not file_exists(presubmit_script_path):
-            self.log.error(
-                'Presubmit script file %s does not exist.',
-                presubmit_script_path
-            )
-            exit(1)
+            error_out(self.log, 'Presubmit script file {} does not exist.'.format(presubmit_script_path))
 
         if storage_type_lower == 'azure':
             storage = AzureStorageContainer(
@@ -52,14 +45,19 @@ class FileUpload():
 
             return (job_blob_url, presubmit_blob_url, )
         elif storage_type_lower == 'api':
-            files_must_not_be_more_than(
-                self.log,
+            bytes_over_limit, error_happened = files_must_not_be_more_than(
                 [
                     job_archive_path,
                     presubmit_script_path
                 ],
                 limit=MAX_FILE_SIZE_FOR_PUT_API
             )
+
+            if error_happened:
+                if bytes_over_limit > 0:
+                    error_out(self.log, 'You attempted to upload a file set greater than the currently accepted file size limit. The limit was exceeded by {} bytes.'.format(bytes_over_limit))
+                else:
+                    error_out(self.log, 'Error. Check that your files exist in the paths given.')
 
             job_blob_url = self.msrd.put_file_upload_via_api(job_archive_path)
             presubmit_blob_url = self.msrd.put_file_upload_via_api(presubmit_script_path)
@@ -69,9 +67,7 @@ class FileUpload():
 
             return (job_blob_url, presubmit_blob_url, )
         else:
-            self.log.error(
-                'Incorrect --storage_type selected for MSRD account with ID %s, must be API or AZURE and %s was used.',
+            error_out(self.log, 'Incorrect --storage_type selected for MSRD account with ID {}, must be API or AZURE and {} was used.'.format(
                 self.config.msrd_account_id,
                 self.args.storage_type,
-            )
-            exit(1)
+            ))
