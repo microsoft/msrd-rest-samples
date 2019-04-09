@@ -1,5 +1,5 @@
 {
-    "seedDir": "//DemofuzzLinux//data",
+    "seedDir": "//DemofuzzLinux//seeds",
     "seedExtension": ".bin",
     "testDriverExecutable": "//DemofuzzLinux//demofuzz.exe",
     "testDriverExeType": "x86",
