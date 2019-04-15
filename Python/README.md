@@ -4,7 +4,7 @@
 
 This project is an example of using the Microsoft Security Risk Detection SDK
 via Python 3. Using some configuration data and a path to a fuzzing target, it
-uploads the files to Azure Storage or to the MSDR File Upload API, generates a
+uploads the files to Azure Storage or to the MSRD File Upload API, generates a
 script to install the targets onto a fuzzing VM, and creates the fuzzing job.
 
 We use the MSRD REST interface directly.
@@ -15,7 +15,7 @@ You have the option of using the Azure Storage [Python client
 library][1] to easily upload files (such as scripts and fuzz targets) and
 obtain time-limited file download URLs using Azure [Shared Access Signatures][2].
 
-You have the option of using the MSDR File Upload PUT based API for packages
+You have the option of using the MSRD File Upload PUT based API for packages
 that are under 4 mb in size.
 
 [1]: https://azure-storage.readthedocs.io/
