@@ -11,7 +11,7 @@ def file_exists(file_path):
 def file_size_in_bytes(file_path):
     '''Return size of file in bytes, or -1 if file does not exist.'''
     if not file_exists(file_path):
-        return -1
+        return None
     statinfo = os.stat(file_path)
     return int(statinfo.st_size)
 
@@ -29,7 +29,7 @@ def files_must_not_be_more_than(files, file_size_limit_in_bytes):
     for current_file in files:
         current_file_size_in_bytes = file_size_in_bytes(current_file)
 
-        if current_file_size_in_bytes < 0:
+        if not current_file_size_in_bytes:
             return (0, True, )
 
         total_bytes = total_bytes + int(current_file_size_in_bytes)
