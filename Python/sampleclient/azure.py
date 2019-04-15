@@ -32,12 +32,16 @@ class AzureStorageContainer(object):
         self._create_container()
 
     def _create_container(self):
-        # Try to create the expected container. If it already exists, this will
-        # fail without throwing an exception. If the container name contains
-        # characters that are not alphanumaric or dashes a AzureHttpError is
-        # raised and you get an exception as Azure enforces this.
+        # Try to create the expected container.
+        # 
+        # If it already exists, this will fail without throwing an exception.
+        #
+        # If the container name contains characters that are not alphanumaric, or
+        # it contains dashes, a 'AzureHttpError' is raised as this is an invalid name.
+        #
+        # Azure enforces this per:
         # https://blogs.msdn.microsoft.com/jmstall/2014/06/12/azure-storage-naming-rules/
-        self.log.debug('Azure container %s attempt create..', self.container_name)
+        self.log.debug('Attempting to create Azure container "%s" ..', self.container_name)
         self.blob_service.create_container(self.container_name)
         self.log.debug('Azure container %s should exist.', self.container_name)
 
