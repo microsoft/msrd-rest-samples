@@ -24,7 +24,7 @@ class FileChecksTestSuite(unittest.TestCase):
         assert not bytes_over_limit
         assert not error_happened
 
-        bytes_over_limit, error_happened = files_must_not_be_more_than([__file__], limit=1)
+        bytes_over_limit, error_happened = files_must_not_be_more_than([__file__], file_size_limit_in_bytes=1)
         assert bytes_over_limit > 1, bytes_over_limit
         assert error_happened
 

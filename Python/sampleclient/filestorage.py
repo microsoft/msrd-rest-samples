@@ -50,7 +50,7 @@ class FileUpload():
                     job_archive_path,
                     presubmit_script_path
                 ],
-                limit=MAX_FILE_SIZE_FOR_PUT_API
+                file_size_limit_in_bytes=MAX_FILE_SIZE_FOR_PUT_API
             )
 
             if error_happened:
