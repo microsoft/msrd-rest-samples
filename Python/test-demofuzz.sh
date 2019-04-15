@@ -17,8 +17,6 @@ python msrd.py -v \
   --job_os="${windows_job_os}" \
   --job_os_type="${windows_job_os_type}"
 
-exit
-
 readonly linux_config='ConfigLinux.json'
 readonly linux_job_path='../SampleFuzzingJobs/DemofuzzLinux'
 readonly linux_job_params='JobParams_Linux.json'
