@@ -26,7 +26,7 @@ def parse_args():
         default='AZURE',
         required=True,
         help="""specifies the method of file uplaod for submission of the job. The options are
-                - AZURE: The job will leverage Micrsoft AZURE Binary Blob Storage.
+                - AZURE: The job will leverage Microsoft AZURE Binary Blob Storage.
                 - API: The job will leverage the MSDR file upload HTTP/PUT API."""
     )
 
