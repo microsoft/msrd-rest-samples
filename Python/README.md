@@ -52,8 +52,8 @@ The `msrd.py` script has five required parameters:
 - `--config`: Path to the script configuration file.
 - `--job_path`: Path to the fuzzing job directory.
 - `--job_params`: Path to a job parameter file.
-- `--job_os`: Select the Operating System to use for job submision.
-- `--job_os_edition`: Select the Operating System Edition to use for job submision.
+- `--job_os`: Select the Operating System to use for job submission.
+- `--job_os_edition`: Select the Operating System Edition to use for job submission.
 
 There is also an optional flag `-v`, which enables verbose logging.
 
