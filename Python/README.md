@@ -16,8 +16,8 @@ available to fuzzing jobs.
 
 1. Ensure you have Python 3 installed.
 2. Create a new virtualenv named `venv` with `python3 -m venv venv`.
-3. Activate the virtualenv with `. venv/bin/activate`.
-4. Install dependencies with `pip -r requirements.txt`.
+3. Activate the virtualenv with `. venv/Scripts/activate`.
+4. Install dependencies with `pip install -r requirements.txt`.
 
 You are now ready to run the script.
 
