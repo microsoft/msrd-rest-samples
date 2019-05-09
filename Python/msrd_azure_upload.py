@@ -179,7 +179,7 @@ def upload_file(client, file_path):
 @click.option('output_job_path',
               '-o', '--out_job_file',
               required=False,
-              default=None)#,  # Only Print Instead by default.
+              default=None)#  Only Print Instead by default.
 @click.argument('files', nargs=-1)
 @click.pass_obj
 def update_job_file(client, input_job_path, output_job_path, files):
