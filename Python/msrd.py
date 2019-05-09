@@ -139,13 +139,12 @@ def update_file_info_in_job(job, file_infos):
     """
     Update the 'setup.package.fileInformations' data in the JSON to append new file information.
     """
-    if file_infos:
-        for file_info in file_infos:
-            try:
-                job['setup']['package']['fileInformations'].append(file_info)
-            except (KeyError, TypeError, AttributeError, ):
-                # If we get here, 'setup.package.fileInformations' does not exist yet.
-                hard_exit('Job file input is missing required setup.package.fileInformations data.')
+    for file_info in file_infos:
+        try:
+            job['setup']['package']['fileInformations'].append(file_info)
+        except (KeyError, TypeError, AttributeError, ):
+            # If we get here, 'setup.package.fileInformations' does not exist yet.
+            hard_exit('Job file input is missing required setup.package.fileInformations data.')
     return job
 
 
