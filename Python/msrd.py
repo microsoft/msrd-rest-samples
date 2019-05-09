@@ -243,8 +243,7 @@ def upload_file(client, file_path):
 @click.option('output_job_path',
               '-o', '--out_job_file',
               default=None,  # Only Print Instead by default.
-              envvar='MSRD_LOCAL_JOB_FILE_OUTPUT_PATH',
-              prompt='Job local file output path?')
+              envvar='MSRD_LOCAL_JOB_FILE_OUTPUT_PATH')
 @click.argument('files', nargs=-1)
 @click.pass_obj
 def submit(client, job_path, output_job_path, files):
