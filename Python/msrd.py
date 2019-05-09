@@ -43,7 +43,7 @@ class Client:
 
     def _url(self, fmt, *args, **kwargs):
         """
-        _url: Format URL.
+        Format URL.
         """
         path = fmt.format(*args, **kwargs)
         return urljoin(self.msrd_url, path)
