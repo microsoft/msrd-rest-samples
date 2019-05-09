@@ -82,7 +82,7 @@ variables.
 The `msrd_azure_upload.py` script has three common parameters.
 Each parameter has an associated environment variable.
 
-1. Microsoft Azure Stprage Account ID: set via the `a`/`--account` option or the `AZURE_STORAGE_ACCOUNT` environment variable.  You can get this using your Azure customer portal.
+1. Microsoft Azure Storage Account ID: set via the `a`/`--account` option or the `AZURE_STORAGE_ACCOUNT` environment variable.  You can get this using your Azure customer portal.
 
 2. Microsoft Azure Storage Key: set via the `-k`/`--key` option or the `AZURE_STORAGE_KEY`
    environment variable. You can get this using your Azure customer portal.
