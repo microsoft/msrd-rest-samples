@@ -108,7 +108,7 @@ this to version control!
 To upload a single file invoke the script like so:
 
 ```
-bash ./msrd_azure_upload.py -a <azure_storage_account> -k <azure_storage_key> -c <azure_container_name> upload-file -f <single_file>
+./msrd_azure_upload.py -a <azure_storage_account> -k <azure_storage_key> -c <azure_container_name> upload-file -f <single_file>
 ```
 
 This will upload a single file to azure and print out the URL that was generated for it. This will also show that your script is correctly configured.
@@ -122,13 +122,13 @@ This can be used for a build system, such as a CI/CD pipeline.
 The default will only print the newly generated JSON object that uses the input file as its template:
 
 ```
-bash ./msrd_azure_upload.py -a <azure_storage_account> -k <azure_storage_key> -c <azure_container_name> update-job-file -i ../job.json  <file1> <file2> <fileN>
+./msrd_azure_upload.py -a <azure_storage_account> -k <azure_storage_key> -c <azure_container_name> update-job-file -i ../job.json  <file1> <file2> <fileN>
 ```
 
 If you want to output a file you must use the `-o` flag:
 
 ```
-bash ./msrd_azure_upload.py -a <azure_storage_account> -k <azure_storage_key> -c <azure_container_name>  update-job-file -i ../job.json -o out_job.json  <file1> <file2> <file3>
+./msrd_azure_upload.py -a <azure_storage_account> -k <azure_storage_key> -c <azure_container_name>  update-job-file -i ../job.json -o out_job.json  <file1> <file2> <file3>
 ```
 
 This will upload the files (Three in the example above) passed as the last positional arguments, 
