@@ -100,7 +100,7 @@ def update_file_info_in_job(job, file_infos):
     for file_info in file_infos:
         try:
             job['setup']['package']['fileInformations'].append(file_info)
-        except (KeyError, TypeError, AttributeError, ):
+        except (KeyError, TypeError, AttributeError):
             # If we get here, 'setup.package.fileInformations' does not exist yet.
             print('Job file input is missing required setup.package.fileInformations data.')
             exit(1)
