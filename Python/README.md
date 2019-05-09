@@ -19,9 +19,9 @@ available to fuzzing jobs.
 3. Activate the virtualenv with `. venv/Scripts/activate`.
 4. Install dependencies with `pip install -r requirements.txt`.
 
-You are now ready to run the script.
+You are now ready to run the scripts.
 
-## Script parameters
+## The msrd.py Script parameters
 
 The `msrd.py` script has three common parameters.
 Each parameter has an associated environment variable.
@@ -76,3 +76,64 @@ from the File API, and submit the job for fuzzing.
 Note that the above assumes that `msrd.py` has executable permissions, and that
 you've made the common script parameters available through environment
 variables.
+
+## The msrd_azure_upload.py Script parameters
+
+The `msrd_azure_upload.py` script has three common parameters.
+Each parameter has an associated environment variable.
+
+1. Microsoft Azure Stprage Account ID: set via the `a`/`--account` option or the `AZURE_STORAGE_ACCOUNT` environment variable.  You can get this using your Azure customer portal.
+
+2. Microsoft Azure Storage Key: set via the `-k`/`--key` option or the `AZURE_STORAGE_KEY`
+   environment variable. You can get this using your Azure customer portal.
+
+3. Microsoft Azure Container Name: set via the `-c`/`--container` option or the `AZURE_CONTAINER_NAME` environment variable.  You can get this using your Azure customer portal.
+
+The Azure credentials are a bit long for interactive use, so you may find
+it most convenient to create a script that exports the parameters as environment
+variables. For example, you may choose to define a file `azure-msrd-env.sh` like so:
+
+```bash
+export AZURE_STORAGE_ACCOUNT='your-storage-account-id-goes-here'
+export AZURE_STORAGE_KEY='your-storage-key-goes-here'
+export AZURE_CONTAINER_NAME='your-container-name-goes-here'
+```
+
+You can then pull this into a shell session via `. azure-msrd-env.sh`. If you do this,
+consider adding a `.gitignore` entry to make sure you don't commit a file like
+this to version control!
+
+## Example usage: Single File Upload
+
+To upload a single file invoke the script like so:
+
+```
+bash ./msrd_azure_upload.py -a <azure_storage_account> -k <azure_storage_key> -c <azure_container_name> upload-file -f <single_file>
+```
+
+This will upload a single file to azure and print out the URL that was generated for it. This will also show that your script is correctly configured.
+
+## Example usage: Upload multiple files and output the correct job json.
+
+You can also use this script to take a MSRD job file formated in JSON as input and automaticly generate a seperate job file that includes the correct file actions, urls, and names added to its `setup.package.fileInformations` path.
+
+This can be used for a build system, such as a CI/CD pipeline.
+
+The default will only print the newly generated JSON object that uses the input file as its template:
+
+```
+bash ./msrd_azure_upload.py -a <azure_storage_account> -k <azure_storage_key> -c <azure_container_name> update-job-file -i ../job.json  <file1> <file2> <fileN>
+```
+
+If you want to output a file you must use the `-o` flag:
+
+```
+bash ./msrd_azure_upload.py -a <azure_storage_account> -k <azure_storage_key> -c <azure_container_name>  update-job-file -i ../job.json -o out_job.json  <file1> <file2> <file3>
+```
+
+This will upload the files (Three in the example above) passed as the last positional arguments, 
+load `../job.json` and update it in memeory to include the newly-created file information, then save the new json file as `out_job.json`.
+
+Note: The above assumes that `msrd_azure_upload.py` has executable permissions.
+
+Note: You can also make all required script parameters available through environment variables.  The optional `-o` script parameter is explicitly not included in this.
