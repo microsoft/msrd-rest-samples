@@ -8,14 +8,6 @@ import click
 import requests
 
 
-def hard_exit(msg):
-    """
-    Hard Exit from App
-    """
-    print(msg)
-    exit(1)
-
-
 class Client:
     """
     Example REST API client.
@@ -144,7 +136,8 @@ def update_file_info_in_job(job, file_infos):
             job['setup']['package']['fileInformations'].append(file_info)
         except (KeyError, TypeError, AttributeError, ):
             # If we get here, 'setup.package.fileInformations' does not exist yet.
-            hard_exit('Job file input is missing required setup.package.fileInformations data.')
+            print('Job file input is missing required setup.package.fileInformations data.')
+            exit(1)
     return job
 
 

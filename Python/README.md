@@ -16,7 +16,7 @@ available to fuzzing jobs.
 
 1. Ensure you have Python 3 installed.
 2. Create a new virtualenv named `venv` with `python3 -m venv venv`.
-3. Activate the virtualenv with `. venv/Scripts/activate`.
+3. Activate the virtualenv with `. venv/bin/activate`.
 4. Install dependencies with `pip install -r requirements.txt`.
 
 You are now ready to run the scripts.
@@ -115,7 +115,7 @@ This will upload a single file to azure and print out the URL that was generated
 
 ## Example usage: Upload multiple files and output the correct job json.
 
-You can also use this script to take a MSRD job file formated in JSON as input and automaticly generate a seperate job file that includes the correct file actions, urls, and names added to its `setup.package.fileInformations` path.
+You can also use this script to take a MSRD job file formated in JSON as input and automatically generate a seperate job file that includes the correct file actions, urls, and names added to its `setup.package.fileInformations` path.
 
 This can be used for a build system, such as a CI/CD pipeline.
 
