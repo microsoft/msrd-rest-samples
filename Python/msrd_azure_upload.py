@@ -108,7 +108,7 @@ def update_file_info_in_job(job, file_infos):
     return job
 
 
-def add_files_info_to_job(client, job, files):
+def upload_file_and_generate_file_info(client, job, files):
     """
     Upload every file in 'files' using the Azure 'client' and collect the generated url.
     Add that url, the file name, and the action 'DownloadOnly' to the 'job' file data.
@@ -191,7 +191,7 @@ def update_job_file(client, input_job_path, output_job_path, files):
     with open(input_job_path) as file:
         job = json.load(file)
 
-    job = add_files_info_to_job(client, job, files)
+    job = upload_file_and_generate_file_info(client, job, files)
 
     if output_job_path:
         with open(output_job_path, 'w+') as out_file:
