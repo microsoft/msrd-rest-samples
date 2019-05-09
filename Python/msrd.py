@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-""" The MSRD Package Based Sumbission Client """
+""" The MSRD Package Based Submission Client """
 import json
 from pathlib import Path
 from urllib.parse import urljoin
@@ -112,7 +112,7 @@ def print_response(response):
 
 DEFAULT_MSRD_URL = 'https://microsoftsecurityriskdetection.com'
 
-MAX_FILE_SIZE = int(4e6)  # Bytes
+MAX_FILE_SIZE = 4194304  # 4 Megabytes.
 
 
 def generate_file_info(client, file):
