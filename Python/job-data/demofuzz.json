@@ -1,0 +1,27 @@
+{
+    "name": "demofuzz",
+    "osImageId": "21539f82-8ed1-4e04-8b65-c4dac5eae289",
+    "tier": "Standard",
+    "setup": {
+        "package": {
+            "command": "bash install-demofuzz.sh",
+            "destinationFolder": "/scratch",
+            "fileInformations": []
+        }
+    },
+    "submit": {
+        "testDriverParameters": {
+            "canRunRepeat": true,
+            "canTestDriverBeRenamed": true,
+            "closesItself": true,
+            "maxDurationSeconds": 5,
+            "runsInLessThan5": true,
+            "seedDir": "/seeds",
+            "seedExtension": ".bin",
+            "singleOsProcess": true,
+            "testDriverExeType": "amd64",
+            "testDriverExecutable": "/app/demofuzz.exe",
+            "testDriverParameters": "\"%testfile%\""
+        }
+    }
+}

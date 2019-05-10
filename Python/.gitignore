@@ -1,4 +1,5 @@
 venv
 *.pyc
-Config.json
 *.zip
+env.sh
+.vscode/

@@ -1,113 +1,139 @@
-# MSRD Python 2 SDK Example
+# MSRD Job Submission with Python 3
+
+- Uses **package-based** job submission
+- Requires **Python 3**
+- Assumes a **Linux** environment
 
 ## Summary
 
-This project is an example of using the Microsoft Security Risk Detection SDK
-via Python 2. Using some configuration data and a path to a fuzzing target, it
-uploads the files to Azure Storage, generates a script to install the targets
-onto a fuzzing VM, and creates the fuzzing job.
-
-We use the MSRD REST interface directly, together with the Azure Storage [Python
-client library][1] to easily upload files (such as scripts and fuzz targets) and
-obtain time-limited file download URLs using Azure [Shared Access
-Signatures][2].
-
-[1]: https://azure-storage.readthedocs.io/
-[2]: https://docs.microsoft.com/en-us/azure/storage/common/storage-dotnet-shared-access-signature-part-1
+This project is an example of **package-based job submission** on **Linux**
+using the Microsoft Security Risk Detection **REST API** and **Python 3**. It
+exposes several API endpoints via a command line script. It also demonstrates
+how the MSRD **Files API** can be used to upload files that will only be
+available to fuzzing jobs.
 
 ## Setup
 
-The following instructions assume a `bash` prompt, either directly on Linux or
-via the Windows Subsystem for Linux (WSL). We describe how to get your Python
-environment set up using `virtualenv`.
+1. Ensure you have Python 3 installed.
+2. Create a new virtualenv named `venv` with `python3 -m venv venv`.
+3. Activate the virtualenv with `. venv/bin/activate`.
+4. Install dependencies with `pip install -r requirements.txt`.
 
-This example only requires that your system install has:
+You are now ready to run the scripts.
 
-1. Python 2.7
-2. `virtualenv`
+## The msrd.py Script parameters
 
-On RHEL/CentOS 7.4, you can install these with:
+The `msrd.py` script has three common parameters.
+Each parameter has an associated environment variable.
 
-```sh
-sudo yum install python-virtualenv
+1. MSRD Account ID: set via the `a`/`--account` option or the `MSRD_ACCOUNT`
+   environment variable.
+
+2. MSRD API Token: set via the `-t`/`--token` option or the `MSRD_TOKEN`
+   environment variable. You can generate API tokens via the Settings page of
+   the MSRD customer portal.
+
+3. MSRD URL (optional): set via the `-u`/`--url` option or the `MSRD_URL`
+   environment variable. Defaults to `https://microsoftsecurityriskdetection.com`.
+
+The Account ID and API Token are a bit long for interactive use, so you may find
+it most convenient to create a script that exports the parameters as environment
+variables. For example, you may choose to define a file `msrd-env.sh` like so:
+
+```bash
+export MSRD_ACCOUNT='your-account-id-goes-here'
+export MSRD_TOKEN='your-api-token-goes-here'
 ```
 
-On Debian or Ubuntu, e.g. if using WSL, you can invoke:
+You can then pull this into a shell session via `. msrd-env.sh`. If you do this,
+consider adding a `.gitignore` entry to make sure you don't commit a file like
+this to version control!
 
-```sh
-sudo apt install python-virtualenv
+## Example usage: `Demofuzz`
+
+To help you get up and running, we've provided a job JSON file for use with the
+`DemofuzzLinux` target in `SampleFuzzingJobs`. This file can be found in the
+`job-data` directory, alongside an `install-demofuzz.sh` script.
+
+First, ensure you have followed the instructions in the Setup section above. You
+can validate that the `msrd.py` script is correctly configured by running the
+command `./msrd.py account-info`.
+
+Then, to submit a job, invoke the script like so:
+
+```bash
+./msrd.py submit \
+  -j job-data/demofuzz.json
+  job-data/install-demofuzz.sh \
+  ../SampleFuzzingJobs/DemofuzzLinux/demofuzz.exe \
+  ../SampleFuzzingJobs/DemofuzzLinux/seeds/data.bin
 ```
 
-Now, in the same directoy as `msrd.py`, create the Python virtual environment
-and install the script's dependencies:
+This will upload the three files passed as positional arguments,
+load `demofuzz.json` and update it to include the newly-created URLs
+from the File API, and submit the job for fuzzing.
 
-```sh
-virtualenv venv
-. venv/bin/activate
-pip install -r requirements.txt
+Note that the above assumes that `msrd.py` has executable permissions, and that
+you've made the common script parameters available through environment
+variables.
+
+## The msrd_azure_upload.py Script parameters
+
+The `msrd_azure_upload.py` script has three common parameters.
+Each parameter has an associated environment variable.
+
+1. Microsoft Azure Storage Account ID: set via the `a`/`--account` option or the `AZURE_STORAGE_ACCOUNT` environment variable.  You can get this using your Azure customer portal.
+
+2. Microsoft Azure Storage Key: set via the `-k`/`--key` option or the `AZURE_STORAGE_KEY`
+   environment variable. You can get this using your Azure customer portal.
+
+3. Microsoft Azure Container Name: set via the `-c`/`--container` option or the `AZURE_CONTAINER_NAME` environment variable.  You can get this using your Azure customer portal.
+
+The Azure credentials are a bit long for interactive use, so you may find
+it most convenient to create a script that exports the parameters as environment
+variables. For example, you may choose to define a file `azure-msrd-env.sh` like so:
+
+```bash
+export AZURE_STORAGE_ACCOUNT='your-storage-account-id-goes-here'
+export AZURE_STORAGE_KEY='your-storage-key-goes-here'
+export AZURE_CONTAINER_NAME='your-container-name-goes-here'
 ```
 
-Your are now ready to run the script.
+You can then pull this into a shell session via `. azure-msrd-env.sh`. If you do this,
+consider adding a `.gitignore` entry to make sure you don't commit a file like
+this to version control!
 
-## Script parameters
+## Example usage: Single File Upload
 
-The `msrd.py` script has three required parameters:
+To upload a single file invoke the script like so:
 
-- `--config`: Path to the script configuration file.
-- `--job_path`: Path to the fuzzing job directory.
-- `--job_params`: Path to a job parameter file.
+```
+./msrd_azure_upload.py -a <azure_storage_account> -k <azure_storage_key> -c <azure_container_name> upload-file -f <single_file>
+```
 
-There is also an optional flag `-v`, which enables verbose logging.
+This will upload a single file to azure and print out the URL that was generated for it. This will also show that your script is correctly configured.
 
-### Script configuration file
+## Example usage: Upload multiple files and output the correct job json.
 
-The script configuration is a JSON file that specifies the origin of the MSRD
-REST API, the name of an Azure Storage "container" (which will be created if it
-doesn't already exist), and Azure Storage and MSRD account authentication data
-(which should **not** be tracked in version control).
+You can also use this script to take a MSRD job file formated in JSON as input and automatically generate a separate job file that includes the correct file actions, urls, and names added to its `setup.package.fileInformations` path.
 
-The configuration file also includes optional HTTP(S) proxy configuration info
-for the client's execution environment. By default, TLS certificates are
-validated. The optional `verifyCerts` key can be set to `true` or `false` to
-enable or disable TLS certificate validation when using a proxy. `verifyCerts`
-can also be set to the path of a PEM-encoded root certificate or bundle to
-trust. You can read more about this
-[here](http://docs.python-requests.org/en/latest/user/advanced/#ssl-cert-verification).
+This can be used for a build system, such as a CI/CD pipeline.
 
-A template for this file (illustrating its schema) can be found in
-`ConfigTemplate.json`. Note that this file must be valid JSON, so your actual
-configuration file should _not_ include any comment syntax (even though the
-template does for the sake of documentation).
+The default will only print the newly generated JSON object that uses the input file as its template:
 
-### Job directory path
+```
+./msrd_azure_upload.py -a <azure_storage_account> -k <azure_storage_key> -c <azure_container_name> update-job-file -i ../job.json  <file1> <file2> <fileN>
+```
 
-This should be a path to a _directory_ containing both the target of the fuzzing
-job and some seed data. This directory's contents will be archived and uploaded
-to Azure Storage. The actual target binary and seed data are specified in the
-job parameters file (see below).
+If you want to output a file you must use the `-o` flag:
 
-### Job parameters file
+```
+./msrd_azure_upload.py -a <azure_storage_account> -k <azure_storage_key> -c <azure_container_name>  update-job-file -i ../job.json -o out_job.json  <file1> <file2> <file3>
+```
 
-The job parameters configuration file is part of the MSRD API. It contains the
-job parameters that a user would _manually_ enter if using the MSRD job creation
-wizard over RDP or SSH.
+This will upload the files (Three in the example above) passed as the last positional arguments, 
+load `../job.json` and update it in memory to include the newly-created file information, then save the new json file as `out_job.json`.
 
-The `JobParams.json` file distributed with this example script works with the
-`DemoFuzz` sample _target_ in the root of this same repo. `JobParams.json`
-assumes that we have unzipped this sample target and seed data to particular
-locations on the fuzzing VM. The `msrd.py` script generates a "job
-presubmission" PowerShell script, which will be fetched and executed on the
-fuzzing VM to do exactly this. See the `create_presubmit_script()` function for
-in `msrd.py` for more info.
+Note: The above assumes that `msrd_azure_upload.py` has executable permissions.
 
-## Use with `DemoFuzz`
-
-To use this script with the `DemoFuzz` sample target, create a file called
-`Config.json`, based on `ConfigTemplate.json`. You _must_ specify all fields
-except for `proxies`, which may be omitted. If you include a `proxies`, key,
-make sure you specify an origin for both the `http` and `https` keys.
-
-Once this is done, you can create a job by running the `test-demofuzz.sh` script
-(which requires `bash`) from the directory `springfield-sdk-exampes/Python`.
-This script just runs `msrd.py` with a fixed set of arguments to create a new
-fuzzing job, with `DemoFuzz` as the target.
+Note: You can also make all required script parameters available through environment variables.  The optional `-o` script parameter is explicitly not included in this.
