@@ -254,7 +254,7 @@ main() {
   info '...done'
 
   info 'validating and submitting job...'
-  vm_command "${job_id}" "sudo /usr/bin/mono /springfield/Wizard/Springfield.Prevalidation.UI.Console.exe -unattend" > "${job_id}/submit.log"
+  vm_command "${job_id}" "sfwizard -unattend" > "${job_id}/submit.log"
 
   info '...job successfully submitted!'
 }
