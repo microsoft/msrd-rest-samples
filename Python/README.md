@@ -115,7 +115,7 @@ This will upload a single file to azure and print out the URL that was generated
 
 ## Example usage: Upload multiple files and output the correct job json.
 
-You can also use this script to take a MSRD job file formated in JSON as input and automatically generate a seperate job file that includes the correct file actions, urls, and names added to its `setup.package.fileInformations` path.
+You can also use this script to take a MSRD job file formated in JSON as input and automatically generate a separate job file that includes the correct file actions, urls, and names added to its `setup.package.fileInformations` path.
 
 This can be used for a build system, such as a CI/CD pipeline.
 
@@ -132,7 +132,7 @@ If you want to output a file you must use the `-o` flag:
 ```
 
 This will upload the files (Three in the example above) passed as the last positional arguments, 
-load `../job.json` and update it in memeory to include the newly-created file information, then save the new json file as `out_job.json`.
+load `../job.json` and update it in memory to include the newly-created file information, then save the new json file as `out_job.json`.
 
 Note: The above assumes that `msrd_azure_upload.py` has executable permissions.
 
