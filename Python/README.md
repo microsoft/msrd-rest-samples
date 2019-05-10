@@ -62,7 +62,7 @@ command `./msrd.py account-info`.
 Then, to submit a job, invoke the script like so:
 
 ```bash
-./msrd.py \
+./msrd.py submit \
   -j job-data/demofuzz.json
   job-data/install-demofuzz.sh \
   ../SampleFuzzingJobs/DemofuzzLinux/demofuzz.exe \
