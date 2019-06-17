@@ -7,7 +7,7 @@ trigger:
 - master
 
 pool:
-  name: sf-pool
+  name: Hosted VS2017
   demands:
     - DotNetFramework
     - msbuild
@@ -18,7 +18,7 @@ steps:
 - task: VSBuild@1
   displayName: "Build solution source\\InPlaceFuzzing.sln"
   inputs:
-    solution: "$(GitRoot)\\SampleFuzzingJobs\\InPlaceFuzzing\\inplacefuzzing\\inplacefuzzing.sln"
+    solution: "SampleFuzzingJobs\\InPlaceFuzzing\\inplacefuzzing\\inplacefuzzing.sln"
     vsVersion: "15.0"
     msbuildArgs: /p:RestorePackages=false" /m:4
     platform: "$(BuildPlatform)"
@@ -28,3 +28,19 @@ steps:
     maximumCpuCount: false
     restoreNugetPackages: false
     msbuildArchitecture: x86
+
+
+- task: NuGetCommand@2
+  inputs:
+    command: 'pack'
+    packagesToPack: 'SampleFuzzingJobs\InPlaceFuzzing\inplacefuzzingSample.nuspec'
+    versioningScheme: 'byPrereleaseNumber'
+    msbuildArchitecture: x86
+
+
+- task: NuGetCommand@2
+  inputs:
+    command: 'push'
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
+    nuGetFeedType: 'internal'
+    publishVstsFeed: '/6b4e3a7d-b009-4842-b76e-fb9a587cdc50'

@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+    <metadata>
+        <id>InPlaceFuzzingSample</id>
+        <version>1.0.0</version>
+        <authors>Microsoft</authors>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Package in place fuzzing sample and seeds</description>
+        <copyright>Microsoft 2019</copyright>
+    </metadata>
+    <files>
+        <file src="Seeds\seed1.re1" target="Seeds\seed1.re1" />
+        <file src="Seeds\seed1.re2" target="Seeds\seed1.re2" />
+        <file src="Seeds\seed1.top" target="Seeds\seed1.top" />
+        <file src="Seeds\seed2.re1" target="Seeds\seed2.re1" />
+        <file src="Seeds\seed2.re2" target="Seeds\seed2.re2" />
+        <file src="Seeds\seed2.top" target="Seeds\seed2.top" />
+        <file src="inplacefuzzing\x64\debug\inplacefuzzing.exe" target="inplacefuzzing.exe" />
+    </files>
+</package>
