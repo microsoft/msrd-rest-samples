@@ -4,7 +4,8 @@
 # https://aka.ms/yaml
 
 trigger:
-- master
+#- master
+- in-place-fuzzing-sample
 
 pool:
   name: sf-pool
