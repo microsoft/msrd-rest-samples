@@ -1,0 +1,30 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- master
+
+pool:
+  name: sf-pool
+  demands:
+    - DotNetFramework
+    - msbuild
+    - visualstudio
+    - vstest
+
+steps:
+- task: VSBuild@1
+  displayName: "Build solution source\\InPlaceFuzzing.sln"
+  inputs:
+    solution: "$(GitRoot)\\SampleFuzzingJobs\\InPlaceFuzzing\\inplacefuzzing\\inplacefuzzing.sln"
+    vsVersion: "15.0"
+    msbuildArgs: /p:RestorePackages=false" /m:4
+    platform: "$(BuildPlatform)"
+    configuration: "$(BuildConfiguration)"
+    clean: false
+    createLogFile: true
+    maximumCpuCount: false
+    restoreNugetPackages: false
+    msbuildArchitecture: x86
