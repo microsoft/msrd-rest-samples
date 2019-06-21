@@ -9,12 +9,13 @@
         <copyright>Microsoft 2019</copyright>
     </metadata>
     <files>
-        <file src="Seeds\seed1.re1" target="Seeds\seed1.re1" />
-        <file src="Seeds\seed1.re2" target="Seeds\seed1.re2" />
-        <file src="Seeds\seed1.top" target="Seeds\seed1.top" />
-        <file src="Seeds\seed2.re1" target="Seeds\seed2.re1" />
-        <file src="Seeds\seed2.re2" target="Seeds\seed2.re2" />
-        <file src="Seeds\seed2.top" target="Seeds\seed2.top" />
-        <file src="inplacefuzzing\x64\debug\inplacefuzzing.exe" target="inplacefuzzing.exe" />
+        <file src="Seeds\seed1.re1" target="content\Seeds\seed1.re1" />
+        <file src="Seeds\seed1.re2" target="content\Seeds\seed1.re2" />
+        <file src="Seeds\seed1.top" target="content\Seeds\seed1.top" />
+        <file src="Seeds\seed2.re1" target="content\Seeds\seed2.re1" />
+        <file src="Seeds\seed2.re2" target="content\Seeds\seed2.re2" />
+        <file src="Seeds\seed2.top" target="content\Seeds\seed2.top" />
+        <file src="inplacefuzzing\x64\debug\inplacefuzzing.exe" target="content\inplacefuzzing.exe" />
+        <file src="inplacefuzzing\x64\debug\inplacefuzzing.pdb" target="content\inplacefuzzing.pdb" />
     </files>
 </package>

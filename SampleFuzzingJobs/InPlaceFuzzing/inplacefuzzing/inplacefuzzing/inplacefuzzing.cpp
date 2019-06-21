@@ -4,9 +4,10 @@
 // In-place fuzzing feature allows seeds refer to other files
 // with different file extensions.
 
-#include <iostream>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <direct.h>
 
 // File header definition
 struct Header {
@@ -27,6 +28,7 @@ char* loadFile(char* filePath) {
     }
     FILE* pSeed = fopen(filePath, "rb");
     if (pSeed == NULL) {
+        printf("Failed to read file `%s`\n", filePath);
         return NULL;
     }
 
@@ -51,12 +53,19 @@ char* loadFile(char* filePath) {
 }
 
 // Load file from the specified path
-// Do not check for any errors
+// Minimal error checking - enough to not crash/hang loading the file,
+// but other errors (like too few fields) are ignored.
 FileFormat parseFile(char* filePath) {
     char* buffer = loadFile(filePath);
+
     Header header = { NULL, NULL, -1 };
 
-    char* pch = strtok(buffer, "\n");
+    if (buffer == NULL) {
+        FileFormat fileFormat = { header, NULL };
+        return fileFormat;
+    }
+
+    char* pch = strtok(buffer, ",");
     while (pch != NULL)
     {
         size_t len = strlen(pch);
@@ -69,9 +78,13 @@ FileFormat parseFile(char* filePath) {
         }
         else {
             header.numberOfReferenceFiles = atoi(pch);
+            if (header.numberOfReferenceFiles > 10) {
+                // Set a limit to avoid hangs allocating large arrays when fuzzing.
+                header.numberOfReferenceFiles = 10;
+            }
             break;
         }
-        pch = strtok(NULL, "\n");
+        pch = strtok(NULL, ",");
     }
 
     FileFormat fileFormat = { header, (char**)malloc(sizeof(char*) * header.numberOfReferenceFiles) };
@@ -83,7 +96,7 @@ FileFormat parseFile(char* filePath) {
     }
 
     for (int i = 0; i < header.numberOfReferenceFiles; i++) {
-        pch = strtok(NULL, "\n");
+        pch = strtok(NULL, ",");
         fileFormat.files[i] = _strdup(pch);
     }
     free(buffer);
@@ -110,14 +123,23 @@ int searchForString(char* files[], int nFiles, char* searchString) {
         return 0;
     }
 
-    int totalOccurences = 0;
+    int totalOccurrences = 0;
 
     for (int i = 0; i < nFiles; i++) {
+        printf("searching file `%s`\n", files[i]);
         char* buffer = loadFile(files[i]);
-        totalOccurences += searchForStringInBuffer(buffer, searchString);
+        totalOccurrences += searchForStringInBuffer(buffer, searchString);
         free(buffer);
     }
-    return totalOccurences;
+
+    if (0 == strcmp(searchString, "YOLO") && totalOccurrences > 0) {
+        char buffer[1];
+        printf("Forcing buffer overflow");
+#pragma prefast(suppress:__WARNING_POTENTIAL_BUFFER_OVERFLOW_HIGH_PRIORITY,"this is an example bug in program")
+        strcpy(buffer, searchString);
+    }
+
+    return totalOccurrences;
 }
 
 int main(int argc, char* argv[])
@@ -129,18 +151,18 @@ int main(int argc, char* argv[])
     char* seedFilePath = argv[1];
     FileFormat mainSeed = parseFile(seedFilePath);
 
-    int occurrences = searchForString(mainSeed.files, mainSeed.header.numberOfReferenceFiles, mainSeed.header.searchString);
-    printf("Found %d number of occurences of the string %s", occurrences, mainSeed.header.searchString);
+    char dir[_MAX_DIR];
+    _splitpath(seedFilePath, NULL, dir, NULL, NULL);
+    _chdir(dir);
 
-    if (0 == strcmp(mainSeed.header.searchString, "POLO") && occurrences > 0) {
-        char buffer[1];
-        printf("Forcing buffer overflow");
-#pragma prefast(suppress:__WARNING_POTENTIAL_BUFFER_OVERFLOW_HIGH_PRIORITY,"this is an example bug in program")
-        strcpy(buffer, mainSeed.header.searchString);
-    }
+    int occurrences = searchForString(mainSeed.files, mainSeed.header.numberOfReferenceFiles, mainSeed.header.searchString);
+    printf("Found %d number of occurrences of the string %s\n", occurrences, mainSeed.header.searchString);
 
     free(mainSeed.header.constant);
     free(mainSeed.header.searchString);
+    for (int i = 0; i < mainSeed.header.numberOfReferenceFiles; i++) {
+        free(mainSeed.files[i]);
+    }
     free(mainSeed.files);
 
     return 0;
