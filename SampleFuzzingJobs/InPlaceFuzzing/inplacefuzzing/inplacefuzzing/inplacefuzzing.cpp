@@ -4,6 +4,7 @@
 // In-place fuzzing feature allows seeds refer to other files
 // with different file extensions.
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -152,7 +153,11 @@ int main(int argc, char* argv[])
     FileFormat mainSeed = parseFile(seedFilePath);
 
     char dir[_MAX_DIR];
-    _splitpath(seedFilePath, NULL, dir, NULL, NULL);
+    char drive[_MAX_DRIVE];
+    _splitpath(seedFilePath, drive, dir, NULL, NULL);
+    if (drive[0]) {
+      _chdrive(toupper(drive[0]) - 'A' + 1);
+    }
     _chdir(dir);
 
     int occurrences = searchForString(mainSeed.files, mainSeed.header.numberOfReferenceFiles, mainSeed.header.searchString);
