@@ -1,6 +1,9 @@
 {
     "name": "demofuzz",
-    "osImageId": "21539f82-8ed1-4e04-8b65-c4dac5eae289",
+    "osType": "Linux",
+    "osEdition": "Redhat",
+    "osBuild": "7.2",
+    "osArchitecture": "x64",
     "tier": "Standard",
     "setup": {
         "package": {
