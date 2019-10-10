@@ -1,0 +1,24 @@
+{
+    "package" : {
+        "name" : "FuzzTargetPackage",
+        "app": "Release\\",
+        "seeds" : "seedfiles\\"
+    },
+    "msrdUri" : "https://www.microsoftsecurityriskdetection.com",
+    "account" : "<YOU_ACCOUNT_GUID>",
+    "jobParameters" : {
+        "seedDir": "c:\\FuzzTargetPackage\\seedFiles",
+        "seedExtension": ".bin",
+        "testDriverExecutable": "c:\\FuzzTargetPackage\\FuzzTarget.exe",
+        "testDriverExeType": "x86",
+        "testDriverParameters": "\"%testfile%\"",
+        "closesItself": true,
+        "maxDurationSeconds": 5,
+        "runsInLessThan5": true,
+        "canRunRepeat": true,
+        "canTestDriverBeRenamed": true,
+        "singleOsProcess": true,
+        "sysprepCompleted": false,
+        "promptValidationSysprep": false
+    }
+}
