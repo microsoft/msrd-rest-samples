@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -eux -o pipefail
+set -eu -o pipefail
 
 mkdir -p /app
 chmod -R a+rwx /app

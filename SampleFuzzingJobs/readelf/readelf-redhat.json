@@ -1,0 +1,30 @@
+{
+    "name": "readelf2.28 - Package (Redhat)",
+    "osType": "Linux",
+    "osEdition": "Redhat",
+    "osBuild": "7.2",
+    "osArchitecture": "x64",
+    "tier": "AflLinux",
+    "setup": {
+        "package": {
+            "command": "bash install-readelf.sh",
+            "destinationFolder": "/scratch",
+            "fileInformations": []
+        }
+    },
+    "submit": {
+        "testDriverParameters": {
+            "canRunRepeat": true,
+            "canTestDriverBeRenamed": true,
+            "closesItself": true,
+            "maxDurationSeconds": 5,
+            "runsInLessThan5": true,
+            "seedDir": "/opt/seeds",
+            "seedExtension": ".elf",
+            "singleOsProcess": true,
+            "testDriverExeType": "amd64",
+            "testDriverExecutable": "/opt/binutils-2.28/binutils/readelf",
+            "testDriverParameters": "-s \"%testfile%\""
+        }
+    }
+}
