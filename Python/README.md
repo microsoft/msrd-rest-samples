@@ -53,7 +53,7 @@ this to version control!
 
 To help you get up and running, we've provided a job JSON file for use with the
 `DemofuzzLinux` target in `SampleFuzzingJobs`. This file can be found in the
-`job-data` directory, alongside an `install-demofuzz.sh` script.
+`SampleFuzzingJobs/DemofuzzLinux` directory, alongside an `install-demofuzz.sh` script.
 
 First, ensure you have followed the instructions in the Setup section above. You
 can validate that the `msrd.py` script is correctly configured by running the
@@ -63,14 +63,14 @@ Then, to submit a job, invoke the script like so:
 
 ```bash
 ./msrd.py submit \
-  -j job-data/demofuzz.json
-  job-data/install-demofuzz.sh \
+  -j ../SampleFuzzingJobs/DemofuzzLinux/demofuzz-redhat.json \
+  ../SampleFuzzingJobs/DemofuzzLinux/install-demofuzz.sh \
   ../SampleFuzzingJobs/DemofuzzLinux/demofuzz.exe \
   ../SampleFuzzingJobs/DemofuzzLinux/seeds/data.bin
 ```
 
 This will upload the three files passed as positional arguments,
-load `demofuzz.json` and update it to include the newly-created URLs
+load `demofuzz-redhat.json` and update it to include the newly-created URLs
 from the File API, and submit the job for fuzzing.
 
 Note that the above assumes that `msrd.py` has executable permissions, and that
@@ -131,7 +131,7 @@ If you want to output a file you must use the `-o` flag:
 ./msrd_azure_upload.py -a <azure_storage_account> -k <azure_storage_key> -c <azure_container_name>  update-job-file -i ../job.json -o out_job.json  <file1> <file2> <file3>
 ```
 
-This will upload the files (Three in the example above) passed as the last positional arguments, 
+This will upload the files (Three in the example above) passed as the last positional arguments,
 load `../job.json` and update it in memory to include the newly-created file information, then save the new json file as `out_job.json`.
 
 Note: The above assumes that `msrd_azure_upload.py` has executable permissions.
