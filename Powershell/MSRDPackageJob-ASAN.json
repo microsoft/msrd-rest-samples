@@ -1,0 +1,32 @@
+{
+    "package" : {
+        "name" : "MyVcAsanTarget",
+        "app": "..\\MyVcAsanTarget\\*.*",
+        "seeds" : "..\\MyVcAsanTarget\\seeds\\"
+    },
+    "msrdUri" : "https://www.microsoftsecurityriskdetection.com",
+    "account" : "<YOU_ACCOUNT_GUID>",
+    "osEdition" : "Server 2019 Datacenter",
+    "jobParameters" : {
+        "seedDir": "c:\\MyVcAsanTarget\\seeds",
+        "seedExtension": ".txt",
+        "testDriverExecutable": "c:\\MyVcAsanTarget\\MyVcAsanTarget.exe",
+        "testDriverExeType": "x86",
+        "testDriverParameters": "\"%testfile%\"",
+        "closesItself": true,
+        "maxDurationSeconds": 5,
+        "runsInLessThan5": true,
+        "canRunRepeat": true,
+        "canTestDriverBeRenamed": true,
+        "singleOsProcess": true,
+        "sysprepCompleted": false,
+        "promptValidationSysprep": false,
+        "ignoreFirstChanceExceptions": true,
+        "options": {
+            "asanOptions": "windows_hook_rtl_allocators=true",
+            "asanSaveDumps": "true",
+            "disableAppVerifier": "true",
+            "useNewWindowsExecutionEngine": "true"
+        }
+    }
+}

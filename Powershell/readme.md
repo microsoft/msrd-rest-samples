@@ -1,11 +1,12 @@
-# MSRD REST API - Powershell Sample
+# Submitting fuzzing jobs using the MSRD REST API via Powershell
 
 MSRD supports two modes of job submissions: VM-based and package-based.
 The Powershell scripts under this folder demonstrate how to submit jobs with each method.
 For automated submission, the Package-based submission is preferred.
 It is faster since no VM needs to be created, but does require you to automate
 the installation and configuration of your test target.
-Whereas the VM-based submission gives you the ability to connect to the VM and manually configure the test target before submitting the job.
+The VM-based submission is slower overall but lets you connect to the VM
+and manually configure the virtual machine before submitting the job.
 
 ## Package-based job submission
 
@@ -32,24 +33,49 @@ cmdkey /generic:MSRD_TOKEN:https://www.microsoftsecurityriskdetection.com /usern
 powershell ./SubmitPackageToMSRD.ps1
 ```
 
-## VM-based submission with result polling
+## Submitting an ASAN-compiled test targets
 
-The Powershell script `PowerShellSample.ps1` demonstrates how to access MSRD REST API
-to perform the following:
+To submit a test target compiled with the new [MSVC Address Sanitizer](https://devblogs.microsoft.com/cppblog/addresssanitizer-asan-for-windows-with-msvc/) library (VCAsan)
+you need to first make sure that your MSRD account is enabled for it; contact the MSRD support team if you are not sure at msrd@microsoft.com.
+Then add the following fields to the `jobParameters` section of the Json file:
+
+```json
+"jobParameters" : {
+     "..." : "...",
+     "ignoreFirstChanceExceptions": true,
+     "options": {
+            "asanOptions": "windows_hook_rtl_allocators=true",
+            "asanSaveDumps": "true",
+            "disableAppVerifier": "true",
+            "useNewWindowsExecutionEngine": "true"
+     }
+}
+```
+
+You can refer to `MSRDPackageJob-ASAN.json` as a template, which assumes that your ASAN-compiled
+test target is located at `MyVcAsanTarget\MyVcAsanTarget.exe`.
+Sample ASAN-built binaries are not currently provided in our sample Git repository, so you
+will need to compile your own sample using Visual Studio 16.4 or later with the `/fsanitize` compiler switch enabled.
+
+To submit the job to MSRD then just run:
+
+```batch
+powershell ./SubmitPackageToMSRD.ps1 -Job MSRDPackageJob-ASAN.json
+```
+
+## Alternative script to submit jobs and poll for results
+
+Alternatively, you can use the other Powershell script `PowerShellSample.ps1` to submit jobs to MSRD.
+This script performs the following:
 
 - Create a job (either Package-based or VM-based)
-- Waits for preparation machine associated with the job to be ready
+- If VM-based, waits for preparation machine associated with the job to be ready
 - Injects test application to be fuzzed and associated seed files
 - Monitors the job progress until it starts fuzzing
 - Waits until at least one result is reported
 - Deletes the job
 
-> NOTE: Although this sample includes Azure Subscription ID and Storage Account parameters,
-it is not a MSRD requirement to have an Azure subscription or an Azure storage account
-if the test files are already publicly available from an HTTP address.
-You can instead upload your binaries and seed files to any internet location accessible from HTTP.
-
-### Usage
+### Usage for `PowershellSample.ps1`
 
 ```powershell
 . PowershellSample.ps1 `
@@ -62,3 +88,7 @@ You can instead upload your binaries and seed files to any internet location acc
       -testFileFolder <Path to the local files on disk to be uploaded to the storage account and eventually the VM> `
 ```
 
+> NOTE: Although this sample includes Azure Subscription ID and Storage Account parameters,
+it is not a MSRD requirement to have an Azure subscription or an Azure storage account
+if the test files are already publicly available from an HTTP address.
+You can instead upload your binaries and seed files to any internet location accessible from HTTP.
